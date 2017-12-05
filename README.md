@@ -1,3 +1,3 @@
-# deep-rl-sc2
+# Deep Reinforcement Learning for Starcraft 2
 
-Working repository for SC2 deep RL agents.
+## TODO
