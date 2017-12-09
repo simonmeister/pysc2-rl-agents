@@ -9,6 +9,11 @@ NUM_PLAYERS = features.SCREEN_FEATURES.player_id.scale
 
 
 class Preprocessor():
+  """Compute network inputs from pysc2 observations.
+
+  See https://github.com/deepmind/pysc2/blob/master/docs/environment.md
+  for the semantics of the available observations.
+  """
 
   def __init__(self, obs_spec):
     self.screen_channels = self.input_channels(features.SCREEN_FEATURES)
@@ -58,30 +63,22 @@ class Preprocessor():
                           dtype=bool)
     is_categorical = np.logical_not(is_numeric)
     scale = np.array([l.scale for l in spec], dtype=np.float32)
-    categorical_scale = scale[is_categorical]
-    categorical_channels = np.sum(categorical_scale)
 
-    numeric = spatial[is_numeric]
+    numeric = spatial[is_numeric].astype(np.float32)
     numeric_scale = scale[is_numeric]
     numeric_out = np.log(numeric / numeric_scale)
+    numeric_out = np.reshape(numeric_out, [height, width, -1])
 
-    categorical_values = spatial[is_categorical]
+    categorical = spatial[is_categorical]
+    categorical_scale = scale[is_categorical]
+    categorical_out = []
+    for i, depth in enumerate(categorical_scale):
+      values = categorical[i, :, :]
+      x, y = np.meshgrid(np.arange(width), np.arange(height))
+      one_hot = np.zeros([height, width, depth], dtype=np.float32)
+      one_hot[y, x, values] = 1
+      categorical_out.append(one_hot)
+    categorical_out = np.concatenate(categorical_out, axis=-1)
 
-    # TODO complete this
-    v = categorical_values.ravel()
-    indices = y * (channel * height * width) + x * (channel * )
-    channel_offsets = np.concatenate([[0], np.cumsum(categorical_scale[:-1])])
-    channel_offsets = np.tile(
-        np.expand_dims(np.expand_dims(channel_offsets, 1), 2),
-        [1, height, width])
-    y = np.arange(height)
-    x = np.arange(width)
-    categorical_out = np.zeros(categorical_channels * height * width,
-                               dtype=np.float32)
-    categorical_out[indices] = 1
-    categorical_out = np.reshape(categorical_out, [-1, height, width])
-
-    out = np.reshape(
-        np.concatenate([numeric_out, categorical_out]),
-        [height, width, -1])
+    out = np.concatenate([numeric_out, categorical_out], axis=-1)
     return out
