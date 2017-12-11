@@ -72,9 +72,9 @@ class Preprocessor():
     categorical = spatial[is_categorical]
     categorical_scale = scale[is_categorical]
     categorical_out = []
+    x, y = np.meshgrid(np.arange(width), np.arange(height))
     for i, depth in enumerate(categorical_scale):
       values = categorical[i, :, :]
-      x, y = np.meshgrid(np.arange(width), np.arange(height))
       one_hot = np.zeros([height, width, depth], dtype=np.float32)
       one_hot[y, x, values] = 1
       categorical_out.append(one_hot)
