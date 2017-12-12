@@ -13,7 +13,7 @@ def mask_invalid_actions(batch_valid_actions, fn_pi):
 # TODO implement sample (see baselines/a2c/utils.py)
 
 
-def sample_independent(batch_valid_actions, policy, size):
+def sample_independent(batch_valid_actions, policy, size): # TODO size
   fn_pi, arg_pis = policy
   fn_pi = mask_invalid_actions(batch_valid_actions, fn_pi)
   fn_samples = sample(fn_pi)
@@ -34,36 +34,27 @@ def sample_independent(batch_valid_actions, policy, size):
 #  valid_actions_list = [obs.observation['available_actions'] for obs in obs_list]
 #  batch_valid_actions = np.stack(valid_actions_list, axis=0) # TODO should be an argument
 
-def step(batch_valid_actions, obs, policy, value):
-  fn_samples, arg_samples = sample_independent(batch_valid_actions, policy)
-  arg_samples_np, fn_samples_np, value_np = sess.run(
-      [fn_samples, arg_samples, value], feed_dict=get_feed_dict(obs)) # TODO get_feed_dict
-
-
-  # TODO return action format as needed by compute_total_log_probs and create FunctionCall objects
-  # as postprocessing?
-  actions_list = []
-  for n in range(samples_np.shape[0]):
-    a_0 = fn_samples_np[n]
-    a_l = []
-    for arg_type in actions.FUNCTIONS._func_list[a_0].args:
-      a_l.append(arg_samples_np[arg_type])
-    action = actions.FunctionCall(a_0, a_l)
-    actions_list.append(action)
-
-  return actions_list, values
-
 
 class A2CAgent():
-  def __init__(self):
-    pass
+  def __init__(self, sess, network_cls=FullyConv):
+    self.sess = sess
+    self.network_cls = network_cls
 
   def build(self):
     """Create tensorflow graph for A2C agent."""
-    # FullyConv()
-    self.policy = ...
-    self.value = ...
-    pass
+    screen = tf.placeholder(tf.float32, [], 'input_screen') # TODO static shapes
+    minimap = tf.placeholder(tf.float32, [], 'input_minimap')
+    flat = tf.placeholder(tf.float32, [], 'input_flat')
+    self.screen = screen
+    self.minimap = minimap
+    self.flat = flat
+    self.policy, self.value = self.network_cls().build(
+        screen, minimap, flat)
+
+  def get_obs_feed(self, obs):
+    return {self.screen: obs[0],
+            self.minimap: obs[1],
+            self.flat: obs[2]}
 
   def train(self, obs, actions, returns, advs):
     """
@@ -74,20 +65,44 @@ class A2CAgent():
       returns: array of shape [num_batch]
       advs: array of shape [num_batch]
     """
-    policy = ... # TODO sess.run with obs to get policy dict (see compute_total_log_probs input)
+    policy, value = self.sess.run(
+        [self.policy, self.value],
+        feed_dict=self.get_obs_feed(obs))
+    # TODO compute loss using compute_total_log_probs
 
   def step(self, batch_valid_actions, obs):
     """
+    Args:
+      batch_valid_actions: one-hot array of shape [num_batch, NUM_FUNCTIONS].
+      obs: tuple with preprocessed observation arrays, with num_batch elements
+        in the first dimensions.
+        
     Returns:
       actions: `compute_total_log_probs`
       values: array of shape [num_batch] containing value estimates.
     """
-    policy = ... 
-    value = ...
-    step(batch_valid_actions, obs, policy, value)
+    fn_samples, arg_samples = sample_independent(batch_valid_actions, self.policy)
+    arg_samples_np, fn_samples_np, value_np = sess.run(
+        [fn_samples, arg_samples, self.value],
+        feed_dict=self.get_obs_feed(obs))
+
+    # TODO return action format as needed by compute_total_log_probs and create FunctionCall objects
+    # as postprocessing?
+    actions_list = []
+    for n in range(samples_np.shape[0]):
+      a_0 = fn_samples_np[n]
+      a_l = []
+      for arg_type in actions.FUNCTIONS._func_list[a_0].args:
+        a_l.append(arg_samples_np[arg_type])
+      action = actions.FunctionCall(a_0, a_l)
+      actions_list.append(action)
+
+    return actions_list, values
 
   def get_value(self, obs):
-    pass
+    return self.sess.run(
+        [self.value],
+        feed_dict=self.get_obs_feed(obs))
 
 
 
