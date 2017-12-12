@@ -76,7 +76,7 @@ class A2CAgent():
       batch_valid_actions: one-hot array of shape [num_batch, NUM_FUNCTIONS].
       obs: tuple with preprocessed observation arrays, with num_batch elements
         in the first dimensions.
-        
+
     Returns:
       actions: `compute_total_log_probs`
       values: array of shape [num_batch] containing value estimates.
@@ -86,18 +86,8 @@ class A2CAgent():
         [fn_samples, arg_samples, self.value],
         feed_dict=self.get_obs_feed(obs))
 
-    # TODO return action format as needed by compute_total_log_probs and create FunctionCall objects
-    # as postprocessing?
-    actions_list = []
-    for n in range(samples_np.shape[0]):
-      a_0 = fn_samples_np[n]
-      a_l = []
-      for arg_type in actions.FUNCTIONS._func_list[a_0].args:
-        a_l.append(arg_samples_np[arg_type])
-      action = actions.FunctionCall(a_0, a_l)
-      actions_list.append(action)
-
-    return actions_list, values
+    actions = (fn_samples, arg_samples)
+    return actions, values
 
   def get_value(self, obs):
     return self.sess.run(

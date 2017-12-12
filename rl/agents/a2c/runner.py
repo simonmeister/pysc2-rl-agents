@@ -34,6 +34,20 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
   return returns[:-1, :], advs
 
 
+def actions_to_pysc2(actions):
+  """Convert agent action representation to FunctionCall representation."""
+  fn_pi, arg_pi = actions
+  actions_list = []
+  for n in range(samples_np.shape[0]):
+    a_0 = fn_samples_np[n]
+    a_l = []
+    for arg_type in actions.FUNCTIONS._func_list[a_0].args:
+      a_l.append(arg_samples_np[arg_type])
+    action = actions.FunctionCall(a_0, a_l)
+    actions_list.append(action)
+  return actions_list
+
+
 class A2CRunner():
   def __init__(self, agent, envs, is_training=True, n_steps, discount):
     """
@@ -74,7 +88,7 @@ class A2CRunner():
       values[:, n] = value_estimate
       obs.append(last_obs)
 
-      obs_raw = envs.step(actions) # TODO
+      obs_raw = envs.step(actions_to_pysc2(actions))
       last_obs = self.preproc.preprocess_obs(obs_raw) # TODO this should return a ndarray of obs
       rewards[:, n] = [t.reward for t in obs_raw]
       dones[:, n] = [t.step_type is StepType.LAST for t in obs_raw]
@@ -88,7 +102,7 @@ class A2CRunner():
     returns, advs = compute_returns_advantages(
         rewards, dones, values, next_values, self.discount)
 
-    actions = ... # TODO sc2 actions to agent action format
+    actions = ... # TODO accumulate
 
     obs = (flatten_first_dims(x) for x in latest_obs)
     actions = flatten_first_dims(actions) # TODO dict shape
