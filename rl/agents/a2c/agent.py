@@ -14,6 +14,7 @@ def mask_invalid_actions(batch_valid_actions, fn_pi):
 
 
 def sample_independent(batch_valid_actions, policy, size): # TODO size
+  """Sample function ids and arguments from a predicted policy."""
   fn_pi, arg_pis = policy
   fn_pi = mask_invalid_actions(batch_valid_actions, fn_pi)
   fn_samples = sample(fn_pi)
@@ -56,7 +57,7 @@ class A2CAgent():
             self.minimap: obs[1],
             self.flat: obs[2]}
 
-  def train(self, obs, actions, returns, advs):
+  def train(self, batch_valid_actions, obs, actions, returns, advs):
     """
     Args:
       obs: tuple with preprocessed observation arrays, with num_batch elements
@@ -68,7 +69,8 @@ class A2CAgent():
     policy, value = self.sess.run(
         [self.policy, self.value],
         feed_dict=self.get_obs_feed(obs))
-    # TODO compute loss using compute_total_log_probs
+    log_probs = compute_total_log_probs(batch_valid_actions, policy, value)
+    # TODO compute loss
 
   def step(self, batch_valid_actions, obs):
     """
@@ -78,7 +80,7 @@ class A2CAgent():
         in the first dimensions.
 
     Returns:
-      actions: `compute_total_log_probs`
+      actions: arrays (see `compute_total_log_probs`)
       values: array of shape [num_batch] containing value estimates.
     """
     fn_samples, arg_samples = sample_independent(batch_valid_actions, self.policy)
@@ -86,14 +88,13 @@ class A2CAgent():
         [fn_samples, arg_samples, self.value],
         feed_dict=self.get_obs_feed(obs))
 
-    actions = (fn_samples, arg_samples)
+    actions = (fn_samples_np, arg_samples_np)
     return actions, values
 
   def get_value(self, obs):
     return self.sess.run(
         [self.value],
         feed_dict=self.get_obs_feed(obs))
-
 
 
 # TODO assemble "actions" argument for compute_total_log_probs
