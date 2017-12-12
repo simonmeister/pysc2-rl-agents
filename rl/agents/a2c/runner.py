@@ -3,6 +3,10 @@ import numpy as np
 from pysc2.env.environment import StepType
 
 
+# TODO: implement multienv, with methods reset(), step(actions), len, envs[i] (return env i)
+# see sc2aibot
+
+
 def compute_returns_advantages(rewards, dones, values, next_values, discount):
   """Compute returns and advantages from received rewards and value estimates.
 
@@ -65,21 +69,19 @@ class A2CRunner():
     last_obs = self.latest_obs
 
     for n in range(self.n_steps):
-      # could calculate value estimate from obs when do training
-      # but saving values here will make n step reward calculation a bit easier
       actions, value_estimate = self.agent.step(last_obs)
 
       values[:, n] = value_estimate
       obs.append(last_obs)
 
-      obs_raw = envs.step(actions)
-      last_obs = self.preproc.preprocess_obs(obs_raw) # TODO this should return an array of obs
+      obs_raw = envs.step(actions) # TODO
+      last_obs = self.preproc.preprocess_obs(obs_raw) # TODO this should return a ndarray of obs
       rewards[:, n] = [t.reward for t in obs_raw]
       dones[:, n] = [t.step_type is StepType.LAST for t in obs_raw]
 
       #for t in obs_raw:
       #   if t.last():
-      #       self._handle_episode_end(t) # TODO
+      #       self._handle_episode_end(t) # TODO (see github sc2aibot)
 
     next_values = self.agent.get_value(last_obs)
 

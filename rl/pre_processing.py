@@ -31,7 +31,7 @@ class Preprocessor():
     return sum(1 if l.type == features.FeatureType.SCALAR
                else l.scale for l in spec)
 
-  # TODO vectorize for multiple environments
+  # TODO support for multiple environments and timesteps (list of obs) - vectorize if possible
   def preprocess_obs(self, obs):
     """Compute screen, minimap and flat network inputs from raw observations.
     """
@@ -51,6 +51,7 @@ class Preprocessor():
         available_one_hot,
         player_id_one_hot,
         np.log(player_numeric)])
+        # TODO control groups, cargo, multi select, build queue
 
     return screen, minimap, flat
 

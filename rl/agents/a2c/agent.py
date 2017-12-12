@@ -1,13 +1,16 @@
 import tensorflow as tf
 
 
-# TODO the code here is still incomplete (many snippets to not fit together yet)
+# TODO the code here is still incomplete (many snippets do not fit together yet)
 
 
 def mask_invalid_actions(batch_valid_actions, fn_pi):
   fn_pi *= batch_valid_actions
   fn_pi /= tf.reduce_sum(fn_pi, axis=1, keep_dims=True)
   return fn_pi
+
+
+# TODO implement sample (see baselines/a2c/utils.py)
 
 
 def sample_independent(batch_valid_actions, policy, size):
@@ -31,11 +34,14 @@ def sample_independent(batch_valid_actions, policy, size):
 #  valid_actions_list = [obs.observation['available_actions'] for obs in obs_list]
 #  batch_valid_actions = np.stack(valid_actions_list, axis=0) # TODO should be an argument
 
-def step(batch_valid_actions, obs_list, policy, value):
+def step(batch_valid_actions, obs, policy, value):
   fn_samples, arg_samples = sample_independent(batch_valid_actions, policy)
   arg_samples_np, fn_samples_np, value_np = sess.run(
       [fn_samples, arg_samples, value], feed_dict=get_feed_dict(obs)) # TODO get_feed_dict
 
+
+  # TODO return action format as needed by compute_total_log_probs and create FunctionCall objects
+  # as postprocessing?
   actions_list = []
   for n in range(samples_np.shape[0]):
     a_0 = fn_samples_np[n]
@@ -68,9 +74,19 @@ class A2CAgent():
       returns: array of shape [num_batch]
       advs: array of shape [num_batch]
     """
-    pass
+    policy = ... # TODO sess.run with obs to get policy dict (see compute_total_log_probs input)
 
-  def step(self, obs):
+  def step(self, batch_valid_actions, obs):
+    """
+    Returns:
+      actions: `compute_total_log_probs`
+      values: array of shape [num_batch] containing value estimates.
+    """
+    policy = ... 
+    value = ...
+    step(batch_valid_actions, obs, policy, value)
+
+  def get_value(self, obs):
     pass
 
 
