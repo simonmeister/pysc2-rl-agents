@@ -20,6 +20,7 @@ class A2CAgent():
         {screen, minimap, flat, valid_actions}.
     """
     ch = static_shape_channels
+    # TODO pass height/width statically?
     screen = tf.placeholder(tf.float32, [None, None, None, ch['screen']],
                             'input_screen')
     minimap = tf.placeholder(tf.float32, [None, None, None, ch['minimap']],
@@ -62,7 +63,7 @@ class A2CAgent():
     opt = tf.train.RMSPropOptimizer(learning_rate=2e-4)
     self.train_op = opt.minimize(loss)
 
-    self.samples = sample_actions(valid_actions, policy, size) # TODO size = (height, width) of screen/minimap
+    self.samples = sample_actions(valid_actions, policy)
 
   def get_obs_feed(self, obs):
     return {self.screen: obs['screen'],
@@ -121,15 +122,14 @@ def mask_invalid_actions(valid_actions, fn_pi):
   return fn_pi
 
 
-
 def compute_policy_entropy(policy):
+  # TODO is it correct to assume additive entropy here?
+  # TODO should we compute the entropy only for the applicable arguments? (see compute_policy_log_probs)
 
   def compute_entropy(probs):
     dist = distributions.Categorical(probs=probs)
     return dist.entropy()
 
-  # TODO is it correct to assume additive entropy here?
-  # TODO should we compute the entropy only for the applicable arguments? (see compute_policy_log_probs)
   fn_pi, arg_pis = policy
   entropy = compute_entropy(fn_pi)
 
