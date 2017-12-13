@@ -22,10 +22,16 @@ class Preprocessor():
         NUM_FUNCTIONS
         + NUM_PLAYERS
         + obs_spec['player'][0] - 1)
+    self.valid_actions_channels = NUM_FUNCTIONS
 
   def get_input_channels(self):
     """Get static channel dimensions of network inputs."""
-    return self.screen_channels, self.minimap_channels, self.flat_channels
+    return {
+        'screen': self.screen_channels,
+        'minimap': self.minimap_channels,
+        'flat': self.flat_channels,
+        'valid_actions': self.minimap_channels}
+    self.screen_channels, self.minimap_channels, self.flat_channels
 
   def input_channels(self, spec):
     return sum(1 if l.type == features.FeatureType.SCALAR
@@ -53,7 +59,11 @@ class Preprocessor():
         np.log(player_numeric)])
         # TODO control groups, cargo, multi select, build queue
 
-    return screen, minimap, flat
+    return {
+        'screen': screen,
+        'minimap': minimap,
+        'flat': flat,
+        'valid_actions': available_one_hot}
 
   def preprocess_spatial(self, spatial, spec):
     """Normalize numeric feature layers and convert categorical values to

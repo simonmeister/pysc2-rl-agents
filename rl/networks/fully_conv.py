@@ -98,9 +98,9 @@ class FullyConv():
     for name, arg_type in actions.TYPES._asdict().items():
       # HACK: we should infer the point type automatically
       if name in ['minimap', 'screen', 'screen2']:
-        arg_out = (True, self.to_nhwc(self.spatial_output(state_out)))
+        arg_out = self.to_nhwc(self.spatial_output(state_out))
       else:
-        arg_out = (False, self.non_spatial_output(fc, arg_type.sizes[0]))
+        arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
       args_out[arg_type] = arg_out
 
     policy = (fn_out, args_out)

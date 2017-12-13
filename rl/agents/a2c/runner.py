@@ -1,6 +1,7 @@
 import numpy as np
 
 from pysc2.env.environment import StepType
+from pysc2.lib import actions
 
 
 # TODO: implement multienv, with methods reset(), step(actions), len, envs[i] (return env i)
@@ -34,15 +35,25 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
   return returns[:-1, :], advs
 
 
-def actions_to_pysc2(actions):
+def actions_to_pysc2(actions, size): # TODO
   """Convert agent action representation to FunctionCall representation."""
-  fn_pi, arg_pi = actions
+  is_spatial = {}
+  for name, arg_type in actions.TYPES._asdict().items():
+    # HACK: we should infer the point type automatically
+    is_spatial_map[arg_type] = name in ['minimap', 'screen', 'screen2']:
+
+  fn_id, arg_ids = actions
   actions_list = []
-  for n in range(samples_np.shape[0]):
-    a_0 = fn_samples_np[n]
+  for n in range(fn_id.shape[0]):
+    a_0 = fn_id[n]
     a_l = []
     for arg_type in actions.FUNCTIONS._func_list[a_0].args:
-      a_l.append(arg_samples_np[arg_type])
+      arg_id = arg_ids[arg_type][n]
+      if is_spatial[arg_type]:
+        arg = [arg_id % width, arg_id // height] # TODO varify spatial dim order
+      else:
+        arg = [arg_id]
+      a_l.append(arg)
     action = actions.FunctionCall(a_0, a_l)
     actions_list.append(action)
   return actions_list
@@ -79,6 +90,7 @@ class A2CRunner():
     rewards = np.zeros((len(self.envs), self.n_steps), dtype=np.float32)
     dones = np.zeros((len(self.envs), self.n_steps), dtype=np.float32)
     all_obs = []
+    all_actions = []
 
     last_obs = self.latest_obs
 
@@ -86,16 +98,13 @@ class A2CRunner():
       actions, value_estimate = self.agent.step(last_obs)
 
       values[:, n] = value_estimate
-      obs.append(last_obs)
+      all_obs.append(last_obs)
+      all_actions.append(actions)
 
       obs_raw = envs.step(actions_to_pysc2(actions))
       last_obs = self.preproc.preprocess_obs(obs_raw) # TODO this should return a ndarray of obs
       rewards[:, n] = [t.reward for t in obs_raw]
       dones[:, n] = [t.step_type is StepType.LAST for t in obs_raw]
-
-      #for t in obs_raw:
-      #   if t.last():
-      #       self._handle_episode_end(t) # TODO (see github sc2aibot)
 
     next_values = self.agent.get_value(last_obs)
 
@@ -104,7 +113,11 @@ class A2CRunner():
 
     actions = ... # TODO accumulate
 
-    obs = (flatten_first_dims(x) for x in latest_obs)
+
+    #  valid_actions_list = [obs.observation['available_actions'] for obs in obs_list]
+    #  valid_actions = np.stack(valid_actions_list, axis=0) # TODO should be an argument
+
+    obs = {k: flatten_first_dims(v) for k, v in obs.items()}
     actions = flatten_first_dims(actions) # TODO dict shape
     returns = flatten_first_dims(returns)
     advs = flatten_first_dims(advs)
