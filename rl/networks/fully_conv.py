@@ -4,7 +4,7 @@ from tensorflow.contrib import layers
 from pysc2.lib import actions
 from pysc2.lib import features
 
-from rl.pre_processing import is_spatial_action
+from rl.pre_processing import is_spatial_action, NUM_FUNCTIONS
 
 
 class FullyConv():
@@ -93,7 +93,7 @@ class FullyConv():
     value = layers.fully_connected(fc, 1, activation_fn=None)
 
     # TODO for minigames, only model available actions?
-    fn_out = self.non_spatial_output(fc, len(actions.FUNCTIONS))
+    fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
     args_out = dict()
     for arg_type in actions.TYPES:
       if is_spatial_action[arg_type]:

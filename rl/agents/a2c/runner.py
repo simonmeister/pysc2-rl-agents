@@ -2,6 +2,7 @@ import numpy as np
 
 from pysc2.env.environment import StepType
 from pysc2.lib import actions
+
 from rl.pre_processing import is_spatial_action
 
 
