@@ -20,7 +20,7 @@ class A2CAgent():
 
     Args:
       static_shape_channels: dict with keys
-        {screen, minimap, flat, valid_actions}.
+        {screen, minimap, flat, available_actions}.
     """
     ch = static_shape_channels
     # TODO pass height/width statically?
@@ -30,8 +30,8 @@ class A2CAgent():
                              'input_minimap')
     flat = tf.placeholder(tf.float32, [None, ch['flat']],
                           'input_flat')
-    valid_actions = tf.placeholder(tf.float32, [None, ch['valid_actions_channels'],
-                                   'input_valid_actions')
+    available_actions = tf.placeholder(tf.float32, [None, ch['available_actions_channels'],
+                                   'input_available_actions')
     advs = tf.placeholder(tf.float32, [None], 'advs')
     returns = tf.placeholder(tf.float32, [None], 'returns')
     self.screen = screen
@@ -39,7 +39,7 @@ class A2CAgent():
     self.flat = flat
     self.advs = advs
     self.returns = returns
-    self.valid_actions = valid_actions
+    self.available_actions = available_actions
 
     policy, value = self.network_cls().build(
         screen, minimap, flat)
@@ -53,7 +53,7 @@ class A2CAgent():
     actions = (fn_id, arg_ids)
     self.actions = actions
 
-    log_probs = compute_policy_log_probs(valid_actions, policy, actions)
+    log_probs = compute_policy_log_probs(available_actions, policy, actions)
 
     policy_loss = -tf.reduce_mean(advs * log_probs)
     value_loss = tf.reduce_mean(tf.square(returns - values) / 2)
@@ -69,13 +69,13 @@ class A2CAgent():
     opt = tf.train.RMSPropOptimizer(learning_rate=2e-4)
     self.train_op = opt.minimize(loss)
 
-    self.samples = sample_actions(valid_actions, policy)
+    self.samples = sample_actions(available_actions, policy)
 
   def get_obs_feed(self, obs):
     return {self.screen: obs['screen'],
             self.minimap: obs['minimap'],
             self.flat: obs['flat'],
-            self.valid_actions: obs['valid_actions'}
+            self.available_actions: obs['available_actions'}
 
   def get_actions_feed(self, actions):
     feed_dict = {self.actions[0]: actions[0]}
@@ -122,8 +122,8 @@ class A2CAgent():
         feed_dict=self.get_obs_feed(obs))
 
 
-def mask_invalid_actions(valid_actions, fn_pi):
-  fn_pi *= valid_actions
+def mask_unavailable_actions(available_actions, fn_pi):
+  fn_pi *= available_actions
   fn_pi /= tf.reduce_sum(fn_pi, axis=1, keep_dims=True)
   return fn_pi
 
@@ -145,7 +145,7 @@ def compute_policy_entropy(policy):
   return entropy
 
 
-def sample_actions(valid_actions, policy):
+def sample_actions(available_actions, policy):
   """Sample function ids and arguments from a predicted policy."""
 
   def sample(probs):
@@ -153,7 +153,7 @@ def sample_actions(valid_actions, policy):
     return dist.sample()
 
   fn_pi, arg_pis = policy
-  fn_pi = mask_invalid_actions(valid_actions, fn_pi)
+  fn_pi = mask_unavailable_actions(available_actions, fn_pi)
   fn_samples = sample(fn_pi)
 
   arg_samples = dict()
@@ -163,12 +163,12 @@ def sample_actions(valid_actions, policy):
   return fn_samples, arg_samples
 
 
-def compute_policy_log_probs(valid_actions, policy, actions):
+def compute_policy_log_probs(available_actions, policy, actions):
   """Compute action log probabilities given predicted policies and selected
   actions.
 
   Args:
-    valid_actions: one-hot (in last dimenson) tensor of shape
+    available_actions: one-hot (in last dimenson) tensor of shape
       [num_batch, NUM_FUNCTIONS].
     policy: [fn_pi, {arg_0: arg_0_pi, ..., arg_n: arg_n_pi}]], where
       each value is a tensor of shape [num_batch, num_params] representing
@@ -184,7 +184,7 @@ def compute_policy_log_probs(valid_actions, policy, actions):
 
   fn_id, arg_ids = actions
   fn_pi, arg_pis = policy
-  fn_pi = mask_invalid_actions(valid_actions, fn_pi)
+  fn_pi = mask_unavailable_actions(available_actions, fn_pi)
   fn_log_prob = compute_log_probs(fn_pi, fn_id)
 
   # TODO logging for each arg_type

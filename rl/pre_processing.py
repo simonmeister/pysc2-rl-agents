@@ -28,7 +28,7 @@ class Preprocessor():
         NUM_FUNCTIONS
         + NUM_PLAYERS
         + obs_spec['player'][0] - 1)
-    self.valid_actions_channels = NUM_FUNCTIONS
+    self.available_actions_channels = NUM_FUNCTIONS
 
   def get_input_channels(self):
     """Get static channel dimensions of network inputs."""
@@ -36,7 +36,7 @@ class Preprocessor():
         'screen': self.screen_channels,
         'minimap': self.minimap_channels,
         'flat': self.flat_channels,
-        'valid_actions': self.minimap_channels}
+        'available_actions': self.minimap_channels}
     self.screen_channels, self.minimap_channels, self.flat_channels
 
   def input_channels(self, spec):
@@ -69,7 +69,7 @@ class Preprocessor():
         'screen': screen,
         'minimap': minimap,
         'flat': flat,
-        'valid_actions': available_one_hot}
+        'available_actions': available_one_hot}
 
   def preprocess_spatial(self, spatial, spec):
     """Normalize numeric feature layers and convert categorical values to
