@@ -8,7 +8,6 @@ from rl.pre_processing import is_spatial_action
 
 # TODO: implement multienv, with methods reset(), step(actions), len, envs[i] (return env i)
 # see sc2aibot
-#
 
 
 def compute_returns_advantages(rewards, dones, values, next_values, discount):
@@ -38,7 +37,7 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
   return returns[:-1, :], advs
 
 
-def actions_to_pysc2(actions, size): # TODO
+def actions_to_pysc2(actions, size):
   """Convert agent action representation to FunctionCall representation."""
   fn_id, arg_ids = actions
   actions_list = []
@@ -48,7 +47,7 @@ def actions_to_pysc2(actions, size): # TODO
     for arg_type in actions.FUNCTIONS._func_list[a_0].args:
       arg_id = arg_ids[arg_type][n]
       if is_spatial_action[arg_type]:
-        arg = [arg_id % width, arg_id // height] # TODO varify spatial dim order
+        arg = [arg_id % width, arg_id // height] # TODO verify dim order (x, y) is correct
       else:
         arg = [arg_id]
       a_l.append(arg)
@@ -58,12 +57,17 @@ def actions_to_pysc2(actions, size): # TODO
 
 
 class A2CRunner():
-  def __init__(self, agent, envs, is_training=True, n_steps, discount):
+  def __init__(self,
+               agent,
+               envs,
+               is_training=True,
+               n_steps=8,
+               discount=0.99):
     """
     Args:
       agent: A2CAgent instance.
-      envs:
-      is_training:
+      envs: multienv instance.
+      is_training: whether to train the agent.
       n_steps: number of agent steps for collecting rollouts.
       discount: reward discount.
     """
@@ -75,7 +79,7 @@ class A2CRunner():
     self.preproc = Preprocessor(self.envs[0].observation_spec)
 
   def reset(self):
-    obs_raw = self.envs.reset()
+    obs_raw = self.envs.reset() # TODO return list or ndarray of obs_raw from envs.step?
     self.last_obs = self.preproc.preprocess_obs(obs_raw)
 
   def run_batch():
@@ -94,13 +98,14 @@ class A2CRunner():
 
     for n in range(self.n_steps):
       actions, value_estimate = self.agent.step(last_obs)
+      size = last_obs['screen'].shape[1:3]
 
       values[:, n] = value_estimate
       all_obs.append(last_obs)
       all_actions.append(actions)
 
-      obs_raw = envs.step(actions_to_pysc2(actions))
-      last_obs = self.preproc.preprocess_obs(obs_raw) # TODO this should return a ndarray of obs
+      obs_raw = envs.step(actions_to_pysc2(actions, size)) # TODO return list or ndarray of obs_raw from envs.step?
+      last_obs = self.preproc.preprocess_obs(obs_raw) # TODO preprocess_obs should process batches of obs
       rewards[:, n] = [t.reward for t in obs_raw]
       dones[:, n] = [t.step_type is StepType.LAST for t in obs_raw]
 
@@ -109,16 +114,11 @@ class A2CRunner():
     returns, advs = compute_returns_advantages(
         rewards, dones, values, next_values, self.discount)
 
-    actions = ... # TODO accumulate
-
-
-    #  valid_actions_list = [obs.observation['available_actions'] for obs in obs_list]
-    #  valid_actions = np.stack(valid_actions_list, axis=0) # TODO should be an argument
+    all_actions = ... # TODO accumulate all_actions into action structure of int32 ndarrays
+    all_obs = ... # TODO accumulate all_obs into dict of single ndarrays
 
     obs = {k: flatten_first_dims(v) for k, v in obs.items()}
-    actions = flatten_first_dims(actions) # TODO dict shape
     returns = flatten_first_dims(returns)
     advs = flatten_first_dims(advs)
-    actions = flatten_first_dims(advs)
 
-    self.agent.train(obs, actions, all_returns, all_advs)
+    self.agent.train(obs, actions, returns, advs)

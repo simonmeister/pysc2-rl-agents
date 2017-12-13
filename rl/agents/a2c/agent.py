@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.distributions import Categorical
 
 
+# TODO add methods to save and load to / from checkpoints (or do it somewhere else?)
 class A2CAgent():
   def __init__(self,
                sess,
@@ -62,6 +63,9 @@ class A2CAgent():
             + value_loss * value_loss_weight
             - entropy * entropy_weight)
 
+    # TODO gradient clipping? (see baselines/a2c/a2c.py)
+
+    # TODO support learning rate schedule and make this configurable
     opt = tf.train.RMSPropOptimizer(learning_rate=2e-4)
     self.train_op = opt.minimize(loss)
 
