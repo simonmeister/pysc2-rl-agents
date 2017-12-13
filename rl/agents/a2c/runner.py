@@ -2,10 +2,12 @@ import numpy as np
 
 from pysc2.env.environment import StepType
 from pysc2.lib import actions
+from rl.pre_processing import is_spatial_action
 
 
 # TODO: implement multienv, with methods reset(), step(actions), len, envs[i] (return env i)
 # see sc2aibot
+#
 
 
 def compute_returns_advantages(rewards, dones, values, next_values, discount):
@@ -37,11 +39,6 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
 
 def actions_to_pysc2(actions, size): # TODO
   """Convert agent action representation to FunctionCall representation."""
-  is_spatial = {}
-  for name, arg_type in actions.TYPES._asdict().items():
-    # HACK: we should infer the point type automatically
-    is_spatial_map[arg_type] = name in ['minimap', 'screen', 'screen2']:
-
   fn_id, arg_ids = actions
   actions_list = []
   for n in range(fn_id.shape[0]):
@@ -49,7 +46,7 @@ def actions_to_pysc2(actions, size): # TODO
     a_l = []
     for arg_type in actions.FUNCTIONS._func_list[a_0].args:
       arg_id = arg_ids[arg_type][n]
-      if is_spatial[arg_type]:
+      if is_spatial_action[arg_type]:
         arg = [arg_id % width, arg_id // height] # TODO varify spatial dim order
       else:
         arg = [arg_id]

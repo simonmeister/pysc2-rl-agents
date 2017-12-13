@@ -8,6 +8,12 @@ NUM_FUNCTIONS = len(actions.FUNCTIONS)
 NUM_PLAYERS = features.SCREEN_FEATURES.player_id.scale
 
 
+is_spatial_action = {}
+for name, arg_type in actions.TYPES._asdict().items():
+  # HACK: we should infer the point type automatically
+  is_spatial_action[arg_type] = name in ['minimap', 'screen', 'screen2']
+
+
 class Preprocessor():
   """Compute network inputs from pysc2 observations.
 

@@ -4,7 +4,7 @@ from tensorflow.contrib import layers
 from pysc2.lib import actions
 from pysc2.lib import features
 
-from rl.algorithms.utils import sample
+from rl.pre_processing import is_spatial_action
 
 
 class FullyConv():
@@ -95,9 +95,8 @@ class FullyConv():
     # TODO for minigames, only model available actions?
     fn_out = self.non_spatial_output(fc, len(actions.FUNCTIONS))
     args_out = dict()
-    for name, arg_type in actions.TYPES._asdict().items():
-      # HACK: we should infer the point type automatically
-      if name in ['minimap', 'screen', 'screen2']:
+    for arg_type in actions.TYPES:
+      if is_spatial_action[arg_type]:
         arg_out = self.to_nhwc(self.spatial_output(state_out))
       else:
         arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
