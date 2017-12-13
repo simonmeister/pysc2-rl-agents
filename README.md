@@ -5,6 +5,7 @@
 - check entropy computation TODO in a2c/agent.py
 - add missing flat observations in pre_processing.py
 - complete run.py
+- exhaustive tensorboard logging
 - resolve all other TODOs
 
 ## Related repositories

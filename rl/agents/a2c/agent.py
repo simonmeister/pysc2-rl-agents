@@ -1,5 +1,7 @@
 import tensorflow as tf
-from tensorflow.contrib import distributions
+
+# See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/distributions/categorical.py
+from tensorflow.distributions import Categorical
 
 
 class A2CAgent():
@@ -127,7 +129,7 @@ def compute_policy_entropy(policy):
   # TODO should we compute the entropy only for the applicable arguments? (see compute_policy_log_probs)
 
   def compute_entropy(probs):
-    dist = distributions.Categorical(probs=probs)
+    dist = Categorical(probs=probs)
     return dist.entropy()
 
   fn_pi, arg_pis = policy
@@ -143,7 +145,7 @@ def sample_actions(valid_actions, policy):
   """Sample function ids and arguments from a predicted policy."""
 
   def sample(probs):
-    dist = distributions.Categorical(probs=probs)
+    dist = Categorical(probs=probs)
     return dist.sample()
 
   fn_pi, arg_pis = policy
