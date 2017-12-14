@@ -14,6 +14,15 @@ for name, arg_type in actions.TYPES._asdict().items():
   is_spatial_action[arg_type] = name in ['minimap', 'screen', 'screen2']
 
 
+def concat_ndarray_dicts(lst, axis=0):
+  """Concatenate ndarray values from list of dicts
+  along new axis."""
+  res = {}
+  for k in lst[0].keys():
+    res[k] = np.stack([d[k] for d in lst], axis=axis)
+  return res
+
+
 class Preprocessor():
   """Compute network inputs from pysc2 observations.
 
@@ -36,15 +45,17 @@ class Preprocessor():
         'screen': self.screen_channels,
         'minimap': self.minimap_channels,
         'flat': self.flat_channels,
-        'available_actions': self.minimap_channels}
-    self.screen_channels, self.minimap_channels, self.flat_channels
+        'available_actions': self.available_actions_channels}
 
   def input_channels(self, spec):
     return sum(1 if l.type == features.FeatureType.SCALAR
                else l.scale for l in spec)
 
-  # TODO support for multiple environments and timesteps (list of obs) - vectorize if possible
-  def preprocess_obs(self, obs):
+  def preprocess_obs(self, obs_list):
+    return concat_ndarray_dicts(
+        [self._preprocess_obs(o) for o in obs_list])
+
+  def _preprocess_obs(self, obs):
     """Compute screen, minimap and flat network inputs from raw observations.
     """
     # TODO for minigames, mask missing actions?
@@ -71,7 +82,8 @@ class Preprocessor():
         'flat': flat,
         'available_actions': available_one_hot}
 
-  def preprocess_spatial(self, spatial, spec):
+  # TODO vectorize this?
+  def _preprocess_spatial(self, spatial, spec):
     """Normalize numeric feature layers and convert categorical values to
     one-hot encodings.
     """
