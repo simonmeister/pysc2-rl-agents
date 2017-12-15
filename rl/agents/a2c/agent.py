@@ -4,8 +4,11 @@ import tensorflow as tf
 from tensorflow.distributions import Categorical
 
 
-# TODO add methods to save and load to / from checkpoints (or do it somewhere else?)
 class A2CAgent():
+  """A2C agent.
+
+  Run build(...) first, then init() or load(...).
+  """
   def __init__(self,
                sess,
                network_cls=FullyConv,
@@ -14,19 +17,30 @@ class A2CAgent():
     self.sess = sess
     self.network_cls = network_cls
     self.value_loss_weight = value_loss_weight
+    self.train_step = 0
 
-  def build(self, static_shape_channels):
+  def build(self, static_shape_channels, side_length, scope, reuse=None):
+    with tf.variable_scope(scope, reuse=reuse):
+      self._build(self, static_shape_channels, side_length)
+      variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
+      self.saver = tf.train.Saver(variables)
+      self.init_op = tf.variables_initializer(variables)
+      train_summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope=scope)
+      self.train_summary_op = tf.summary.merge(train_summaries)
+
+  def _build(self, static_shape_channels, side_length):
     """Create tensorflow graph for A2C agent.
 
     Args:
       static_shape_channels: dict with keys
         {screen, minimap, flat, available_actions}.
+      side_length: Integer side length of screen and minimap.
     """
     ch = static_shape_channels
-    # TODO pass height/width statically?
-    screen = tf.placeholder(tf.float32, [None, None, None, ch['screen']],
+    sl = side_length
+    screen = tf.placeholder(tf.float32, [None, sl, sl, ch['screen']],
                             'input_screen')
-    minimap = tf.placeholder(tf.float32, [None, None, None, ch['minimap']],
+    minimap = tf.placeholder(tf.float32, [None, sl, sl, ch['minimap']],
                              'input_minimap')
     flat = tf.placeholder(tf.float32, [None, ch['flat']],
                           'input_flat')
@@ -63,6 +77,11 @@ class A2CAgent():
             + value_loss * value_loss_weight
             - entropy * entropy_weight)
 
+    tf.summary.scalar('loss/policy', policy_loss)
+    tf.summary.scalar('loss/value', value_loss)
+    tf.summary.scalar('loss/entropy', entropy)
+    tf.summary.scalar('loss/total', loss)
+
     # TODO gradient clipping? (see baselines/a2c/a2c.py)
 
     # TODO support learning rate schedule and make this configurable
@@ -82,14 +101,18 @@ class A2CAgent():
     feed_dict.update({v: actions[k] for v in self.actions[1]})
     return feed_dict
 
-  def train(self, obs, actions, returns, advs):
+  def train(self, obs, actions, returns, advs, summary=False):
     """
     Args:
       obs: dict of preprocessed observation arrays, with num_batch elements
         in the first dimensions.
-      actions: see `compute_total_log_probs`
-      returns: array of shape [num_batch]
-      advs: array of shape [num_batch]
+      actions: see `compute_total_log_probs`.
+      returns: array of shape [num_batch].
+      advs: array of shape [num_batch].
+      summary: Whether to return a summary.
+
+    Returns:
+      summary: Summary or None.
     """
     feed_dict = self.get_obs_feed(obs)
     feed_dict.update(self.get_actions_feed(actions))
@@ -99,9 +122,14 @@ class A2CAgent():
 
     ops = [self.train_op]
 
-    # TODO add summary ops
+    if summary:
+      ops.append(self.train_summary_op)
 
-    self.sess.run(ops, feed_dict=feed_dict)
+    res = self.sess.run(ops, feed_dict=feed_dict)
+    train_step += 1
+
+    if summary:
+      return res[-1]
 
   def step(self, obs):
     """
@@ -120,6 +148,22 @@ class A2CAgent():
     return self.sess.run(
         self.value,
         feed_dict=self.get_obs_feed(obs))
+
+  def init(self):
+    self.sess.run(self.init_op)
+
+  def save(self, path, step=None):
+    os.makedirs(path, exist_ok=True)
+    step = step or self.train_step
+    print("Saving agent to %s, step %d" % (path, step))
+    ckpt_path = os.path.join(path, 'model.ckpt')
+    self.saver.save(self.sess, ckpt_path, global_step=step)
+
+  def load(self, path):
+    ckpt = tf.train.get_checkpoint_state(path)
+    self.saver.restore(self.sess, ckpt.model_checkpoint_path)
+    self.train_step = int(ckpt.model_checkpoint_path.split('-')[-1])
+    print("Loaded agent at train_step %d" % self.train_step)
 
 
 def mask_unavailable_actions(available_actions, fn_pi):
