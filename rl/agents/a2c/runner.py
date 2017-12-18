@@ -1,26 +1,27 @@
 import numpy as np
+import tensorflow as tf
 
 from pysc2.lib.actions import FunctionCall, FUNCTIONS
 
 from rl.pre_processing import Preprocessor
-from rl.pre_processing import is_spatial_action, concat_ndarray_dicts
+from rl.pre_processing import is_spatial_action, stack_ndarray_dicts
 
 
 def compute_returns_advantages(rewards, dones, values, next_values, discount):
   """Compute returns and advantages from received rewards and value estimates.
 
   Args:
-    rewards: array of shape [n_env, n_steps] containing received rewards.
-    dones: array of shape [n_env, n_steps] indicating whether an episode is
+    rewards: array of shape [n_steps, n_env] containing received rewards.
+    dones: array of shape [n_steps, n_env] indicating whether an episode is
       finished after a time step.
-    values: array of shape [n_env, n_steps] containing estimated values.
+    values: array of shape [n_steps, n_env] containing estimated values.
     next_values: array of shape [n_env] containing estimated values after the
       last step for each environment.
     discount: scalar discount for future rewards.
 
   Returns:
-    returns: array of shape [n_env, n_steps]
-    advs: array of shape [n_env, n_steps]
+    returns: array of shape [n_steps, n_env]
+    advs: array of shape [n_steps, n_env]
   """
   returns = np.zeros([rewards.shape[0] + 1, rewards.shape[1]])
   advs = np.zeros_like(rewards)
@@ -35,6 +36,7 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
 
 def actions_to_pysc2(actions, size):
   """Convert agent action representation to FunctionCall representation."""
+  width, height = size
   fn_id, arg_ids = actions
   actions_list = []
   for n in range(fn_id.shape[0]):
@@ -71,6 +73,7 @@ class A2CRunner():
     """
     self.agent = agent
     self.envs = envs
+    self.summary_writer = summary_writer
     self.train = train
     self.n_steps = n_steps
     self.discount = discount
@@ -91,7 +94,7 @@ class A2CRunner():
     print("episode %d: score = %f" % (self.episode_counter, score))
     self.episode_counter += 1
 
-  def run_batch(train_summary=False):
+  def run_batch(self, train_summary=False):
     """Collect trajectories for a single batch and train (if self.train).
 
     Args:
@@ -101,41 +104,42 @@ class A2CRunner():
       result: None (if not self.train) or the return value of agent.train.
     """
     def flatten_first_dims(x):
-      new_shape = [x.shape[0] * x.shape[1]] + x.shape[2:]
+      new_shape = [x.shape[0] * x.shape[1]] + list(x.shape[2:])
       return x.reshape(*new_shape)
 
     def flatten_first_dims_dict(x):
       return {k: flatten_first_dims(v) for k, v in x.items()}
 
-    def concat_and_flatten_actions(lst, axis=0):
+    def stack_and_flatten_actions(lst, axis=0):
       fn_id_list, arg_dict_list = zip(*lst)
-      fn_id = np.concatenate(fn_id_list, axis=axis)
+      fn_id = np.stack(fn_id_list, axis=axis)
       fn_id = flatten_first_dims(fn_id)
-      arg_ids = concat_ndarray_dicts(arg_dict_list, axis=axis)
+      arg_ids = stack_ndarray_dicts(arg_dict_list, axis=axis)
       arg_ids = flatten_first_dims_dict(arg_ids)
       return (fn_id, arg_ids)
 
-    shapes = (self.envs.n_envs, self.n_steps)
+    shapes = (self.n_steps, self.envs.n_envs)
     values = np.zeros(shapes, dtype=np.float32)
     rewards = np.zeros(shapes, dtype=np.float32)
     dones = np.zeros(shapes, dtype=np.float32)
     all_obs = []
     all_actions = []
 
-    last_obs = self.latest_obs
+    last_obs = self.last_obs
 
     for n in range(self.n_steps):
       actions, value_estimate = self.agent.step(last_obs)
       size = last_obs['screen'].shape[1:3]
 
-      values[:, n] = value_estimate
+      values[n, :] = value_estimate
       all_obs.append(last_obs)
       all_actions.append(actions)
 
-      obs_raw = envs.step(actions_to_pysc2(actions, size))
+      pysc2_actions = actions_to_pysc2(actions, size)
+      obs_raw = self.envs.step(pysc2_actions)
       last_obs = self.preproc.preprocess_obs(obs_raw)
-      rewards[:, n] = [t.reward for t in obs_raw]
-      dones[:, n] = [t.last() for t in obs_raw]
+      rewards[n, :] = [t.reward for t in obs_raw]
+      dones[n, :] = [t.last() for t in obs_raw]
 
       for t in obs_raw:
         if t.last():
@@ -146,8 +150,8 @@ class A2CRunner():
     returns, advs = compute_returns_advantages(
         rewards, dones, values, next_values, self.discount)
 
-    actions = concat_and_flatten_actions(all_actions)
-    obs = flatten_first_dims_dict(concat_ndarray_dicts(all_obs))
+    actions = stack_and_flatten_actions(all_actions)
+    obs = flatten_first_dims_dict(stack_ndarray_dicts(all_obs))
     returns = flatten_first_dims(returns)
     advs = flatten_first_dims(advs)
 

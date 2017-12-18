@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 
 # See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/distributions/categorical.py
@@ -105,7 +107,7 @@ class A2CAgent():
 
   def get_actions_feed(self, actions):
     feed_dict = {self.actions[0]: actions[0]}
-    feed_dict.update({v: actions[k] for v in self.actions[1]})
+    feed_dict.update({v: actions[1][k] for k, v in self.actions[1].items()})
     return feed_dict
 
   def train(self, obs, actions, returns, advs, summary=False):

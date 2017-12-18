@@ -14,13 +14,19 @@ for name, arg_type in actions.TYPES._asdict().items():
   is_spatial_action[arg_type] = name in ['minimap', 'screen', 'screen2']
 
 
-def concat_ndarray_dicts(lst, axis=0):
+def stack_ndarray_dicts(lst, axis=0):
   """Concatenate ndarray values from list of dicts
   along new axis."""
   res = {}
   for k in lst[0].keys():
     res[k] = np.stack([d[k] for d in lst], axis=axis)
   return res
+
+
+def log_transform(x, scale=None):
+  if scale is not None:
+    x /= scale
+  return np.log(x + 1)
 
 
 class Preprocessor():
@@ -52,8 +58,8 @@ class Preprocessor():
                else l.scale for l in spec)
 
   def preprocess_obs(self, obs_list):
-    return concat_ndarray_dicts(
-        [self._preprocess_obs(o) for o in obs_list])
+    return stack_ndarray_dicts(
+        [self._preprocess_obs(o.observation) for o in obs_list])
 
   def _preprocess_obs(self, obs):
     """Compute screen, minimap and flat network inputs from raw observations.
@@ -67,13 +73,13 @@ class Preprocessor():
     player_id_one_hot[obs['player'][0]] = 1
     player_numeric = np.asarray(obs['player'][1:], dtype=np.float32)
 
-    screen = self.preprocess_spatial(obs['screen'], features.SCREEN_FEATURES)
-    minimap = self.preprocess_spatial(obs['minimap'], features.MINIMAP_FEATURES)
+    screen = self._preprocess_spatial(obs['screen'], features.SCREEN_FEATURES)
+    minimap = self._preprocess_spatial(obs['minimap'], features.MINIMAP_FEATURES)
 
     flat = np.concatenate([
         available_one_hot,
         player_id_one_hot,
-        np.log(player_numeric)])
+        log_transform(player_numeric)])
         # TODO control groups, cargo, multi select, build queue
 
     return {
@@ -95,14 +101,15 @@ class Preprocessor():
 
     numeric = spatial[is_numeric].astype(np.float32)
     numeric_scale = scale[is_numeric]
-    numeric_out = np.log(numeric / numeric_scale)
-    numeric_out = np.reshape(numeric_out, [height, width, -1])
+    numeric = np.reshape(numeric, [height, width, -1])
+    numeric_out = log_transform(numeric, numeric_scale)
 
     categorical = spatial[is_categorical]
     categorical_scale = scale[is_categorical]
     categorical_out = []
     x, y = np.meshgrid(np.arange(width), np.arange(height))
     for i, depth in enumerate(categorical_scale):
+      depth = int(depth)
       values = categorical[i, :, :]
       one_hot = np.zeros([height, width, depth], dtype=np.float32)
       one_hot[y, x, values] = 1

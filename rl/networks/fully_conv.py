@@ -91,6 +91,7 @@ class FullyConv():
     fc = layers.fully_connected(flat_out, 256, activation_fn=tf.nn.relu)
 
     value = layers.fully_connected(fc, 1, activation_fn=None)
+    value = tf.reshape(value, [-1])
 
     # TODO for minigames, only model available actions?
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)

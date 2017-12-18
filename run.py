@@ -30,13 +30,13 @@ parser.add_argument('--map_name', type=str, default='MoveToBeacon',
                     help='name of SC2 map')
 parser.add_argument('--visualize', action='store_true',
                     help='render with pygame (implies --envs=1)')
-parser.add_argument('--resolution', type=int, default=64,
+parser.add_argument('--resolution', type=int, default=32,
                     help='screen and minimap resolution')
 parser.add_argument('--envs', type=int, default=64,
                     help='number of environments simulated in parallel')
 parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
-parser.add_argument('--steps_per_batch', type=int, default=40,
+parser.add_argument('--steps_per_batch', type=int, default=8,
                     help='number of agent steps when collecting trajectories for a single batch')
 parser.add_argument('--discount', type=float, default=0.99,
                     help='discount for future rewards')
@@ -54,9 +54,9 @@ parser.add_argument('--value_loss_weight', type=float, default=0.5,
                     help='weight of value function loss')
 parser.add_argument('--lr', type=float, default=2e-4,
                     help='learning rate')
-parser.add_argument('--save_dir', type=str, default='out/summary',
+parser.add_argument('--save_dir', type=str, default='out/models',
                     help='root directory for checkpoint storage')
-parser.add_argument('--summary_dir', type=str, default='out/models',
+parser.add_argument('--summary_dir', type=str, default='out/summary',
                     help='root directory for summary storage')
 
 args = parser.parse_args()
@@ -126,7 +126,7 @@ def main():
       while True:
         write_summary = i % args.summary_iters == 0
 
-        if i % args.save_iters == 0:
+        if i > 0 and i % args.save_iters == 0:
           _save_if_training(agent, summary_writer)
 
         result = runner.run_batch(train_summary=write_summary)
