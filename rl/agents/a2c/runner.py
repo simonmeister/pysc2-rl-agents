@@ -1,6 +1,5 @@
 import numpy as np
 
-from pysc2.env.environment import StepType
 from pysc2.lib.actions import FunctionCall, FUNCTIONS
 
 from rl.pre_processing import is_spatial_action, concat_ndarray_dicts
@@ -56,7 +55,7 @@ class A2CRunner():
   def __init__(self,
                agent,
                envs,
-               preproc,
+               summary_writer=None,
                is_training=True,
                n_steps=8,
                discount=0.99):
@@ -74,20 +73,23 @@ class A2CRunner():
     self.n_steps = n_steps
     self.discount = discount
     self.preproc = Preprocessor(self.envs.observation_spec()[0])
+    self.episode_counter = 0
 
   def reset(self):
     obs_raw = self.envs.reset()
     self.last_obs = self.preproc.preprocess_obs(obs_raw)
 
-  def run_batch(summary=False):
-    """
-    Args:
-      summary: Whether to return a summary.
+  def _summarize_episode(self, timestep):
+    score = timestep.observation["score_cumulative"][0]
+    if self.summary_writer is not None:
+      summary = tf.Summary()
+      summary.value.add(tag='sc2/episode_score', simple_value=score)
+      self.summary_writer.add_summary(summary, self.episode_counter)
 
-    Returns:
-      summary: Summary or None. #TODO
-    """
+    print("episode %d: score = %f" % (self.episode_counter, score))
+    self.episode_counter += 1
 
+  def run_batch(train_summary=False):
     def flatten_first_dims(x):
       new_shape = [x.shape[0] * x.shape[1]] + x.shape[2:]
       return x.reshape(*new_shape)
@@ -123,7 +125,11 @@ class A2CRunner():
       obs_raw = envs.step(actions_to_pysc2(actions, size))
       last_obs = self.preproc.preprocess_obs(obs_raw)
       rewards[:, n] = [t.reward for t in obs_raw]
-      dones[:, n] = [t.step_type is StepType.LAST for t in obs_raw]
+      dones[:, n] = [t.last() for t in obs_raw]
+
+      for t in obs_raw:
+        if t.last():
+          self._summarize_episode(t)
 
     next_values = self.agent.get_value(last_obs)
 
@@ -135,4 +141,5 @@ class A2CRunner():
     returns = flatten_first_dims(returns)
     advs = flatten_first_dims(advs)
 
-    self.agent.train(obs, actions, returns, advs)
+    return self.agent.train(obs, actions, returns, advs,
+                            summary=train_summary)

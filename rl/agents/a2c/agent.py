@@ -115,7 +115,7 @@ class A2CAgent():
       summary: Whether to return a summary.
 
     Returns:
-      summary: Summary or None.
+      summary: (agent_step, Summary) or None.
     """
     feed_dict = self.get_obs_feed(obs)
     feed_dict.update(self.get_actions_feed(actions))
@@ -129,10 +129,11 @@ class A2CAgent():
       ops.append(self.train_summary_op)
 
     res = self.sess.run(ops, feed_dict=feed_dict)
-    train_step += 1
+    agent_step = self.train_step
+    self.train_step += 1
 
     if summary:
-      return res[-1]
+      return (agent_step, res[-1])
 
   def step(self, obs):
     """
@@ -176,8 +177,7 @@ def mask_unavailable_actions(available_actions, fn_pi):
 
 
 def compute_policy_entropy(policy):
-  # TODO is it correct to assume additive entropy here?
-  # TODO should we compute the entropy only for the applicable arguments? (see compute_policy_log_probs)
+  # TODO compute the entropy only for the applicable arguments? (see compute_policy_log_probs)
 
   def compute_entropy(probs):
     dist = Categorical(probs=probs)

@@ -28,7 +28,6 @@ parser.add_argument('--resolution', type=int, default=64,
                     help='screen and minimap resolution')
 parser.add_argument('--envs', type=int, default=64,
                     help='number of environments simulated in parallel')
-parser.add_argument('--render', action='store_true', help='overwrite existing experiment')
 parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
 parser.add_argument('--steps_per_batch', type=int, default=40,
@@ -66,10 +65,10 @@ summary_type = 'train' if args.train else 'eval'
 summary_path = os.path.join(args.summary_dir, args.experiment_id, summary_type)
 
 
-def _save_if_training(agent):
+def _save_if_training(agent, summary_writer):
   if args.train:
     agent.save(ckpt_path)
-    agent.flush_summaries()
+    summary_writer.flush()
     sys.stdout.flush()
 
 
@@ -91,6 +90,7 @@ def main():
     # envs = SingleEnv(make_sc2env(**env_args))
 
     sess = tf.Session()
+    summary_writer = tf.summary.FileWriter(summary_path)
 
     agent = A2CAgent(
         sess=sess,
@@ -101,6 +101,7 @@ def main():
     runner = Runner(
         envs=envs,
         agent=agent,
+        summary_writer=summary_writer,
         discount=args.discount,
         n_steps=args.steps_per_batch,
         do_training=args.training)
@@ -108,8 +109,8 @@ def main():
     static_shape_channels = runner.preproc.get_input_channels()
     agent.build(static_shape_channels, resolution=args.resolution)
 
-    if os.path.exists(full_chekcpoint_path):
-      agent.load(full_chekcpoint_path)
+    if os.path.exists(ckpt_path):
+      agent.load(ckpt_path)
     else:
       agent.init()
 
@@ -118,13 +119,18 @@ def main():
     i = 0
     try:
       while True:
-        if i % args.summary_iters == 0:
-          print("iter = %d" % i)
+        write_summary = i % args.summary_iters == 0:
 
         if i % args.save_iters == 0:
-          _save_if_training(agent)
+          _save_if_training(agent, summary_writer)
 
-        runner.run_batch()
+        result = runner.run_batch(train_summary=write_summary)
+
+        if write_summary:
+          agent_step, summary = result
+          summary_writer.add_summary(summary, global_step=agent_step)
+          print('iter %d' % i)
+
         i += 1
 
         if 0 <= args.iters <= i:
@@ -133,9 +139,10 @@ def main():
     except KeyboardInterrupt:
         pass
 
-    _save_if_training(agent)
+    _save_if_training(agent, summary_writer)
 
     envs.close()
+    summary_writer.close()
 
 
 if __name__ == "__main__":

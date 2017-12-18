@@ -6,8 +6,6 @@
 - more detailed tensorboard logging related to different fn arguments?
 - resolve all other TODOs in the files
 
-- check entropy computation TODO in a2c/agent.py
-
 ## Related repositories
 - [sc2aibot](https://github.com/pekaalto/sc2aibot)
 - [pysc2-agents](https://github.com/xhujoy/pysc2-agents)
