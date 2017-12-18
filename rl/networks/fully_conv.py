@@ -17,16 +17,15 @@ class FullyConv():
   def __init__(self, data_format='NHWC'):
     self.data_format = data_format
 
-  def input_conv(in):
+  def input_conv(self, x, name):
     conv1 = layers.conv2d(
-        in, 16,
+        x, 16,
         kernel_size=5,
         stride=1,
         padding='SAME',
         activation_fn=tf.nn.relu,
         data_format=self.data_format,
-        scope="%s/conv1" % name,
-        trainable=self.trainable)
+        scope="%s/conv1" % name)
     conv2 = layers.conv2d(
         conv1, 32,
         kernel_size=3,
@@ -34,20 +33,19 @@ class FullyConv():
         padding='SAME',
         activation_fn=tf.nn.relu,
         data_format=self.data_format,
-        scope="%s/conv2" % name,
-        trainable=self.trainable)
+        scope="%s/conv2" % name)
     return conv2
 
-  def input_fc(in):
+  def input_fc(self, x):
     # TODO find out correct number of channels
-    return layers.fully_connected(in, 256, activation_fn=tf.tanh)
+    return layers.fully_connected(x, 256, activation_fn=tf.tanh)
 
-  def non_spatial_output(self, in, channels):
-    logits = layers.fully_connected(in, channels, activation_fn=None)
+  def non_spatial_output(self, x, channels):
+    logits = layers.fully_connected(x, channels, activation_fn=None)
     return tf.nn.softmax(logits)
 
-  def spatial_output(self, in):
-    logits = layers.conv2d(in, 1, kernel_size=1, stride=1, activation_fn=None)
+  def spatial_output(self, x):
+    logits = layers.conv2d(x, 1, kernel_size=1, stride=1, activation_fn=None)
     logits = layers.flatten(logits)
     return tf.nn.softmax(logits)
 
@@ -56,17 +54,19 @@ class FullyConv():
       return tf.concat(lst, axis=1)
     return tf.concat(lst, axis=3)
 
-  def broadcast_along_channels(self, flat):
+  def broadcast_along_channels(self, flat, size2d):
     if self.data_format == 'NCHW':
       return tf.tile(tf.expand_dims(tf.expand_dims(flat, 2), 3),
-                     [1, 1, size2d[0], size2d[1]])
+                     tf.stack([1, 1, size2d[0], size2d[1]]))
     return tf.tile(tf.expand_dims(tf.expand_dims(flat, 1), 2),
-                   [1, size2d[0], size2d[1], 1])
+                   tf.stack([1, size2d[0], size2d[1], 1]))
 
-  def get_size2d(self, feature_map):
+  def get_size2d(self, map2d):
     if self.data_format == 'NCHW':
-      return map2d[2:]
-    return map2d[1:3]
+      size = tf.shape(map2d)[2:]
+    else:
+      size = tf.shape(map2d)[1:3]
+    return tf.unstack(size)
 
   def to_nhwc(self, map2d):
     if self.data_format == 'NCHW':
@@ -79,9 +79,9 @@ class FullyConv():
     return map2d
 
   def build(self, screen_input, minimap_input, non_spatial_input):
-    screen_out = input_conv(self.from_nhwc(screen_input))
-    minimap_out = input_conv(self.from_nhwc(minimap_input))
-    non_spatial_out = input_fc(non_spatial_input)
+    screen_out = self.input_conv(self.from_nhwc(screen_input), 'screen')
+    minimap_out = self.input_conv(self.from_nhwc(minimap_input), 'minimap')
+    non_spatial_out = self.input_fc(non_spatial_input)
 
     size2d = self.get_size2d(screen_out)
     broadcast_out = self.broadcast_along_channels(non_spatial_out, size2d)

@@ -58,7 +58,7 @@ def worker(remote, env_fn_wrapper):
       remote.close()
       break
     elif cmd == 'observation_spec':
-      spec = env.observation_spec())
+      spec = env.observation_spec()
       remote.send(spec)
     else:
       raise NotImplementedError

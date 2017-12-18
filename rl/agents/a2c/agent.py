@@ -1,7 +1,11 @@
 import tensorflow as tf
 
 # See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/distributions/categorical.py
-from tensorflow.distributions import Categorical
+from tensorflow.contrib.distributions import Categorical
+
+from pysc2.lib.actions import TYPES as ACTION_TYPES
+
+from rl.networks.fully_conv import FullyConv
 
 
 class A2CAgent():
@@ -24,7 +28,7 @@ class A2CAgent():
 
   def build(self, static_shape_channels, resolution, scope, reuse=None):
     with tf.variable_scope(scope, reuse=reuse):
-      self._build(self, static_shape_channels, resolution)
+      self._build(static_shape_channels, resolution)
       variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
       self.saver = tf.train.Saver(variables)
       self.init_op = tf.variables_initializer(variables)
@@ -47,8 +51,8 @@ class A2CAgent():
                              'input_minimap')
     flat = tf.placeholder(tf.float32, [None, ch['flat']],
                           'input_flat')
-    available_actions = tf.placeholder(tf.float32, [None, ch['available_actions_channels'],
-                                   'input_available_actions')
+    available_actions = tf.placeholder(tf.float32, [None, ch['available_actions']],
+                                       'input_available_actions')
     advs = tf.placeholder(tf.float32, [None], 'advs')
     returns = tf.placeholder(tf.float32, [None], 'returns')
     self.screen = screen
@@ -65,7 +69,7 @@ class A2CAgent():
 
     fn_id = tf.placeholder(tf.int32, [None, ], 'fn_id')
     arg_ids = {
-        k: tf.placeholder(tf.int32, [None], 'arg_{}_id'.format(k))
+        k: tf.placeholder(tf.int32, [None], 'arg_{}_id'.format(k.id))
         for k in policy[1].keys()}
     actions = (fn_id, arg_ids)
     self.actions = actions
@@ -97,7 +101,7 @@ class A2CAgent():
     return {self.screen: obs['screen'],
             self.minimap: obs['minimap'],
             self.flat: obs['flat'],
-            self.available_actions: obs['available_actions'}
+            self.available_actions: obs['available_actions']}
 
   def get_actions_feed(self, actions):
     feed_dict = {self.actions[0]: actions[0]}
@@ -227,6 +231,9 @@ def compute_policy_log_probs(available_actions, policy, actions):
       not available for a specific (state, action) pair.
   """
   def compute_log_probs(probs, labels):
+    probs = tf.maximum(probs, 1e-10)
+     # Gather arbitrary id for unused arguments (log probs will be masked)
+    labels = tf.maximum(labels, 0)
     return tf.log(tf.gather(probs, labels))
 
   fn_id, arg_ids = actions
@@ -236,10 +243,11 @@ def compute_policy_log_probs(available_actions, policy, actions):
 
   # TODO logging for each arg_type
   total = fn_log_prob
-  for arg_type in arg_type in actions.TYPES:
+  for arg_type in ACTION_TYPES:
+    print(arg_type)
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
-    arg_log_prob = compute_log_probs(arg_pi, tf.maximum(arg_id, 1e-10))
+    arg_log_prob = compute_log_probs(arg_pi, arg_id)
     # Mask argument log prob if the argument is not relevant
     arg_log_prob *= (arg_id != -1)
     total += arg_log_prob

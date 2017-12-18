@@ -2,6 +2,7 @@ import numpy as np
 
 from pysc2.lib.actions import FunctionCall, FUNCTIONS
 
+from rl.pre_processing import Preprocessor
 from rl.pre_processing import is_spatial_action, concat_ndarray_dicts
 
 

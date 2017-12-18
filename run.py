@@ -13,6 +13,12 @@ from rl.networks.fully_conv import FullyConv
 from rl.environment import SubprocVecEnv, make_sc2env, SingleEnv
 
 
+# Workaround for pysc2 flags
+from absl import flags
+FLAGS = flags.FLAGS
+FLAGS(['run.py'])
+
+
 parser = argparse.ArgumentParser(description='Starcraft 2 deep RL agents')
 parser.add_argument('experiment_id', type=str,
                     help='identifier to store experiment results')
@@ -52,7 +58,6 @@ parser.add_argument('--save_dir', type=str, default='out/summary',
                     help='root directory for checkpoint storage')
 parser.add_argument('--summary_dir', type=str, default='out/models',
                     help='root directory for summary storage')
-
 
 args = parser.parse_args()
 if args.visualize:
@@ -94,21 +99,20 @@ def main():
 
     agent = A2CAgent(
         sess=sess,
-        loss_value_weight=args.value_loss_weight,
+        value_loss_weight=args.value_loss_weight,
         entropy_weight=args.entropy_weight,
         learning_rate=args.lr)
 
-    runner = Runner(
+    runner = A2CRunner(
         envs=envs,
         agent=agent,
         train=args.train,
         summary_writer=summary_writer,
         discount=args.discount,
-        n_steps=args.steps_per_batch,
-        do_training=args.training)
+        n_steps=args.steps_per_batch)
 
     static_shape_channels = runner.preproc.get_input_channels()
-    agent.build(static_shape_channels, resolution=args.resolution)
+    agent.build(static_shape_channels, resolution=args.resolution, scope='A2C')
 
     if os.path.exists(ckpt_path):
       agent.load(ckpt_path)
@@ -120,7 +124,7 @@ def main():
     i = 0
     try:
       while True:
-        write_summary = i % args.summary_iters == 0:
+        write_summary = i % args.summary_iters == 0
 
         if i % args.save_iters == 0:
           _save_if_training(agent, summary_writer)
