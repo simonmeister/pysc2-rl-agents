@@ -101,6 +101,7 @@ def main():
     runner = Runner(
         envs=envs,
         agent=agent,
+        train=args.train,
         summary_writer=summary_writer,
         discount=args.discount,
         n_steps=args.steps_per_batch,

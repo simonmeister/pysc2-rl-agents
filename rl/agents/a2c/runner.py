@@ -56,20 +56,21 @@ class A2CRunner():
                agent,
                envs,
                summary_writer=None,
-               is_training=True,
+               train=True,
                n_steps=8,
                discount=0.99):
     """
     Args:
       agent: A2CAgent instance.
       envs: SubprocVecEnv instance.
-      is_training: whether to train the agent.
+      summary_writer: summary writer to log episode scores.
+      train: whether to train the agent.
       n_steps: number of agent steps for collecting rollouts.
-      discount: reward discount.
+      discount: future reward discount.
     """
     self.agent = agent
     self.envs = envs
-    self.is_training = is_training
+    self.train = train
     self.n_steps = n_steps
     self.discount = discount
     self.preproc = Preprocessor(self.envs.observation_spec()[0])
@@ -90,6 +91,14 @@ class A2CRunner():
     self.episode_counter += 1
 
   def run_batch(train_summary=False):
+    """Collect trajectories for a single batch and train (if self.train).
+
+    Args:
+      train_summary: return a Summary of the training step (losses, etc.).
+
+    Returns:
+      result: None (if not self.train) or the return value of agent.train.
+    """
     def flatten_first_dims(x):
       new_shape = [x.shape[0] * x.shape[1]] + x.shape[2:]
       return x.reshape(*new_shape)
@@ -141,5 +150,9 @@ class A2CRunner():
     returns = flatten_first_dims(returns)
     advs = flatten_first_dims(advs)
 
-    return self.agent.train(obs, actions, returns, advs,
-                            summary=train_summary)
+    if self.train:
+      return self.agent.train(
+          obs, actions, returns, advs,
+          summary=train_summary)
+
+    return None
