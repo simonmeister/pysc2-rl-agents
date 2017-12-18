@@ -6,6 +6,9 @@
 - more detailed tensorboard logging related to different fn arguments?
 - resolve all other TODOs in the files
 
+## Usage
+For example, `python run.py my_test --envs 1`.
+
 ## Related repositories
 - [sc2aibot](https://github.com/pekaalto/sc2aibot)
 - [pysc2-agents](https://github.com/xhujoy/pysc2-agents)

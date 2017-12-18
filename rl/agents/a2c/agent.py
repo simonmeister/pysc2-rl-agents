@@ -77,12 +77,12 @@ class A2CAgent():
     log_probs = compute_policy_log_probs(available_actions, policy, actions)
 
     policy_loss = -tf.reduce_mean(advs * log_probs)
-    value_loss = tf.reduce_mean(tf.square(returns - values) / 2)
+    value_loss = tf.reduce_mean(tf.square(returns - value) / 2)
     entropy = tf.reduce_mean(compute_policy_entropy(policy))
 
     loss = (policy_loss
-            + value_loss * value_loss_weight
-            - entropy * entropy_weight)
+            + value_loss * self.value_loss_weight
+            - entropy * self.entropy_weight)
 
     tf.summary.scalar('loss/policy', policy_loss)
     tf.summary.scalar('loss/value', value_loss)
@@ -234,7 +234,7 @@ def compute_policy_log_probs(available_actions, policy, actions):
     probs = tf.maximum(probs, 1e-10)
      # Gather arbitrary id for unused arguments (log probs will be masked)
     labels = tf.maximum(labels, 0)
-    return tf.log(tf.gather(probs, labels))
+    return tf.log(tf.gather(probs, labels, axis=1))
 
   fn_id, arg_ids = actions
   fn_pi, arg_pis = policy
@@ -244,7 +244,6 @@ def compute_policy_log_probs(available_actions, policy, actions):
   # TODO logging for each arg_type
   total = fn_log_prob
   for arg_type in ACTION_TYPES:
-    print(arg_type)
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
     arg_log_prob = compute_log_probs(arg_pi, arg_id)
