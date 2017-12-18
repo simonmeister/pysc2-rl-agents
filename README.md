@@ -1,11 +1,12 @@
 # Deep Reinforcement Learning for Starcraft 2
 
 ## TODO
-- check entropy computation TODO in a2c/agent.py
 - add missing flat observations in pre_processing.py
-- complete run.py
-- exhaustive tensorboard logging
-- resolve all other TODOs
+- only consider the actions that can be used in a specific map
+- more detailed tensorboard logging related to different fn arguments?
+- resolve all other TODOs in the files
+
+- check entropy computation TODO in a2c/agent.py
 
 ## Related repositories
 - [sc2aibot](https://github.com/pekaalto/sc2aibot)

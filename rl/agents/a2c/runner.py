@@ -56,6 +56,7 @@ class A2CRunner():
   def __init__(self,
                agent,
                envs,
+               preproc,
                is_training=True,
                n_steps=8,
                discount=0.99):
@@ -78,7 +79,14 @@ class A2CRunner():
     obs_raw = self.envs.reset()
     self.last_obs = self.preproc.preprocess_obs(obs_raw)
 
-  def run_batch():
+  def run_batch(summary=False):
+    """
+    Args:
+      summary: Whether to return a summary.
+
+    Returns:
+      summary: Summary or None. #TODO
+    """
 
     def flatten_first_dims(x):
       new_shape = [x.shape[0] * x.shape[1]] + x.shape[2:]

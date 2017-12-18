@@ -13,34 +13,37 @@ class A2CAgent():
                sess,
                network_cls=FullyConv,
                value_loss_weight=0.5,
-               entropy_weight=0.01):
+               entropy_weight=1e-3,
+               learning_rate=1e-4):
     self.sess = sess
     self.network_cls = network_cls
     self.value_loss_weight = value_loss_weight
+    self.entropy_weight = entropy_weight
+    self.learning_rate = learning_rate
     self.train_step = 0
 
-  def build(self, static_shape_channels, side_length, scope, reuse=None):
+  def build(self, static_shape_channels, resolution, scope, reuse=None):
     with tf.variable_scope(scope, reuse=reuse):
-      self._build(self, static_shape_channels, side_length)
+      self._build(self, static_shape_channels, resolution)
       variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
       self.saver = tf.train.Saver(variables)
       self.init_op = tf.variables_initializer(variables)
       train_summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope=scope)
       self.train_summary_op = tf.summary.merge(train_summaries)
 
-  def _build(self, static_shape_channels, side_length):
+  def _build(self, static_shape_channels, resolution):
     """Create tensorflow graph for A2C agent.
 
     Args:
       static_shape_channels: dict with keys
         {screen, minimap, flat, available_actions}.
-      side_length: Integer side length of screen and minimap.
+      resolution: Integer resolution of screen and minimap.
     """
     ch = static_shape_channels
-    sl = side_length
-    screen = tf.placeholder(tf.float32, [None, sl, sl, ch['screen']],
+    res = resolution
+    screen = tf.placeholder(tf.float32, [None, res, res, ch['screen']],
                             'input_screen')
-    minimap = tf.placeholder(tf.float32, [None, sl, sl, ch['minimap']],
+    minimap = tf.placeholder(tf.float32, [None, res, res, ch['minimap']],
                              'input_minimap')
     flat = tf.placeholder(tf.float32, [None, ch['flat']],
                           'input_flat')
@@ -84,8 +87,8 @@ class A2CAgent():
 
     # TODO gradient clipping? (see baselines/a2c/a2c.py)
 
-    # TODO support learning rate schedule and make this configurable
-    opt = tf.train.RMSPropOptimizer(learning_rate=2e-4)
+    # TODO support learning rate schedule
+    opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
     self.train_op = opt.minimize(loss)
 
     self.samples = sample_actions(available_actions, policy)
