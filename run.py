@@ -65,6 +65,9 @@ args = parser.parse_args()
 # TODO write args to config file and store together with summaries (https://pypi.python.org/pypi/ConfigArgParse)
 
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
+
 ckpt_path = os.path.join(args.save_dir, args.experiment_id)
 summary_type = 'train' if args.train else 'eval'
 summary_path = os.path.join(args.summary_dir, args.experiment_id, summary_type)
