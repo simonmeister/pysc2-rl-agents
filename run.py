@@ -30,6 +30,8 @@ parser.add_argument('--map_name', type=str, default='MoveToBeacon',
                     help='name of SC2 map')
 parser.add_argument('--visualize', action='store_true',
                     help='render with pygame (implies --envs=1)')
+parser.add_argument('--max_windows', type=int, default=2,
+                    help='maximum number of visualization windows to open')
 parser.add_argument('--resolution', type=int, default=32,
                     help='screen and minimap resolution')
 parser.add_argument('--envs', type=int, default=64,
@@ -38,7 +40,7 @@ parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
 parser.add_argument('--steps_per_batch', type=int, default=8,
                     help='number of agent steps when collecting trajectories for a single batch')
-parser.add_argument('--discount', type=float, default=0.99,
+parser.add_argument('--discount', type=float, default=0.95,
                     help='discount for future rewards')
 parser.add_argument('--iters', type=int, default=-1,
                     help='number of iterations to run (-1 to run forever)')
@@ -48,9 +50,9 @@ parser.add_argument('--summary_iters', type=int, default=50,
                     help='record summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
                     help='store checkpoint after this many iterations')
-parser.add_argument('--entropy_weight', type=float, default=1e-3,
+parser.add_argument('--entropy_weight', type=float, default=1e-6,
                     help='weight of entropy penalty')
-parser.add_argument('--value_loss_weight', type=float, default=0.5,
+parser.add_argument('--value_loss_weight', type=float, default=1.0,
                     help='weight of value function loss')
 parser.add_argument('--lr', type=float, default=2e-4,
                     help='learning rate')
@@ -60,8 +62,6 @@ parser.add_argument('--summary_dir', type=str, default='out/summary',
                     help='root directory for summary storage')
 
 args = parser.parse_args()
-if args.visualize:
-  args.envs = 1
 # TODO write args to config file and store together with summaries (https://pypi.python.org/pypi/ConfigArgParse)
 
 
@@ -88,10 +88,16 @@ def main():
         step_mul=args.step_mul,
         game_steps_per_episode=0,
         screen_size_px=size_px,
-        minimap_size_px=size_px,
-        visualize=args.visualize)
+        minimap_size_px=size_px)
+    vis_env_args = env_args.copy()
+    vis_env_args['visualize'] = args.visualize
+    num_vis = min(args.envs, args.max_windows)
+    env_fns = [partial(make_sc2env, **vis_env_args)] * num_vis
+    num_no_vis = args.envs - num_vis
+    if num_no_vis > 1:
+      env_fns.extend([partial(make_sc2env, **env_args)] * num_no_vis)
 
-    envs = SubprocVecEnv((partial(make_sc2env, **env_args),) * args.envs)
+    envs = SubprocVecEnv(env_fns)
     # envs = SingleEnv(make_sc2env(**env_args))
 
     sess = tf.Session()
@@ -132,9 +138,9 @@ def main():
         result = runner.run_batch(train_summary=write_summary)
 
         if write_summary:
-          agent_step, summary = result
+          agent_step, loss, summary = result
           summary_writer.add_summary(summary, global_step=agent_step)
-          print('iter %d' % i)
+          print('iter %d: loss = %f' % (i, loss))
 
         i += 1
 

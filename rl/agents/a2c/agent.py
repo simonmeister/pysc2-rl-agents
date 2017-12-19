@@ -1,6 +1,7 @@
 import os
 
 import tensorflow as tf
+from tensorflow.contrib import layers
 
 # See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/distributions/categorical.py
 from tensorflow.contrib.distributions import Categorical
@@ -20,12 +21,14 @@ class A2CAgent():
                network_cls=FullyConv,
                value_loss_weight=0.5,
                entropy_weight=1e-3,
-               learning_rate=1e-4):
+               learning_rate=1e-4,
+               max_gradient_norm=500.0):
     self.sess = sess
     self.network_cls = network_cls
     self.value_loss_weight = value_loss_weight
     self.entropy_weight = entropy_weight
     self.learning_rate = learning_rate
+    self.max_gradient_norm = max_gradient_norm
     self.train_step = 0
 
   def build(self, static_shape_channels, resolution, scope, reuse=None):
@@ -90,12 +93,19 @@ class A2CAgent():
     tf.summary.scalar('loss/value', value_loss)
     tf.summary.scalar('loss/entropy', entropy)
     tf.summary.scalar('loss/total', loss)
+    self.loss = loss
 
     # TODO gradient clipping? (see baselines/a2c/a2c.py)
 
     # TODO support learning rate schedule
     opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
-    self.train_op = opt.minimize(loss)
+    self.train_op = layers.optimize_loss(
+        loss=loss,
+        global_step=tf.train.get_global_step(),
+        optimizer=opt,
+        clip_gradients=self.max_gradient_norm,
+        learning_rate=None,
+        name="train_op")
 
     self.samples = sample_actions(available_actions, policy)
 
@@ -121,7 +131,7 @@ class A2CAgent():
       summary: Whether to return a summary.
 
     Returns:
-      summary: (agent_step, Summary) or None.
+      summary: (agent_step, loss, Summary) or None.
     """
     feed_dict = self.get_obs_feed(obs)
     feed_dict.update(self.get_actions_feed(actions))
@@ -129,7 +139,7 @@ class A2CAgent():
         self.returns: returns,
         self.advs: advs})
 
-    ops = [self.train_op]
+    ops = [self.train_op, self.loss]
 
     if summary:
       ops.append(self.train_summary_op)
@@ -139,7 +149,7 @@ class A2CAgent():
     self.train_step += 1
 
     if summary:
-      return (agent_step, res[-1])
+      return (agent_step, res[1], res[-1])
 
   def step(self, obs):
     """
