@@ -196,7 +196,8 @@ def mask_unavailable_actions(available_actions, fn_pi):
 
 
 def compute_policy_entropy(available_actions, policy, actions):
-  """
+  """Compute total policy entropy.
+
   Args: (same as compute_policy_log_probs)
 
   Returns:
