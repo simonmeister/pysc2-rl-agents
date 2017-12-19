@@ -184,16 +184,21 @@ class A2CAgent():
     print("Loaded agent at train_step %d" % self.train_step)
 
 
+def log_clip(x):
+  """Logarithm when some values in x might be zero."""
+  return tf.log(tf.maximum(x, 1e-12))
+
+
 def mask_unavailable_actions(available_actions, fn_pi):
   fn_pi *= available_actions
   fn_pi /= tf.reduce_sum(fn_pi, axis=1, keep_dims=True)
   return fn_pi
 
 
-def compute_policy_entropy(available_actions, policy):
+def compute_policy_entropy(available_actions, policy, actions):
   def compute_entropy(probs):
-    dist = Categorical(probs=probs)
-    return dist.entropy()
+    return -tf.reduce_sum(
+        log_clip(probs) * probs, axis=-1)
 
   _, arg_ids = actions
 
@@ -204,10 +209,10 @@ def compute_policy_entropy(available_actions, policy):
   for arg_type in ACTION_TYPES:
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
-    batch_mask = (arg_id != 1)
+    batch_mask = tf.to_float(arg_id != -1)
     entropy += tf.reduce_sum(
         compute_entropy(arg_pi) * batch_mask
-        )  / tf.reduce_sum(batch_mask)
+        )  / tf.maximum(1e-10, tf.reduce_sum(batch_mask))
 
   return entropy
 
@@ -247,10 +252,9 @@ def compute_policy_log_probs(available_actions, policy, actions):
       not available for a specific (state, action) pair.
   """
   def compute_log_probs(probs, labels):
-    probs = tf.maximum(probs, 1e-12)
      # Gather arbitrary id for unused arguments (log probs will be masked)
     labels = tf.maximum(labels, 0)
-    return tf.log(tf.gather(probs, labels, axis=1))
+    return log_clip(tf.gather(probs, labels, axis=1))
 
   fn_id, arg_ids = actions
   fn_pi, arg_pis = policy
