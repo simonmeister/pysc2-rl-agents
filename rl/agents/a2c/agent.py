@@ -196,9 +196,15 @@ def mask_unavailable_actions(available_actions, fn_pi):
 
 
 def compute_policy_entropy(available_actions, policy, actions):
+  """
+  Args: (same as compute_policy_log_probs)
+
+  Returns:
+    entropy: a scalar float tensor.
+  """
+
   def compute_entropy(probs):
-    return -tf.reduce_sum(
-        log_clip(probs) * probs, axis=-1)
+    return -tf.reduce_sum(log_clip(probs) * probs, axis=-1)
 
   _, arg_ids = actions
 
