@@ -83,7 +83,7 @@ class A2CAgent():
 
     policy_loss = -tf.reduce_mean(advs * log_probs)
     value_loss = tf.reduce_mean(tf.square(returns - value) / 2)
-    entropy = tf.reduce_mean(compute_policy_entropy(policy))
+    entropy = compute_policy_entropy(available_actions, policy, actions)
 
     loss = (policy_loss
             + value_loss * self.value_loss_weight
@@ -94,8 +94,6 @@ class A2CAgent():
     tf.summary.scalar('loss/entropy', entropy)
     tf.summary.scalar('loss/total', loss)
     self.loss = loss
-
-    # TODO gradient clipping? (see baselines/a2c/a2c.py)
 
     # TODO support learning rate schedule
     opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
@@ -192,18 +190,24 @@ def mask_unavailable_actions(available_actions, fn_pi):
   return fn_pi
 
 
-def compute_policy_entropy(policy):
-  # TODO compute the entropy only for the applicable arguments? (see compute_policy_log_probs)
-
+def compute_policy_entropy(available_actions, policy):
   def compute_entropy(probs):
     dist = Categorical(probs=probs)
     return dist.entropy()
 
-  fn_pi, arg_pis = policy
-  entropy = compute_entropy(fn_pi)
+  _, arg_ids = actions
 
-  for arg_pi in arg_pis.values():
-    entropy += compute_entropy(arg_pi)
+  fn_pi, arg_pis = policy
+  fn_pi = mask_unavailable_actions(available_actions, fn_pi)
+  entropy = tf.reduce_mean(compute_entropy(fn_pi))
+
+  for arg_type in ACTION_TYPES:
+    arg_id = arg_ids[arg_type]
+    arg_pi = arg_pis[arg_type]
+    batch_mask = (arg_id != 1)
+    entropy += tf.reduce_sum(
+        compute_entropy(arg_pi) * batch_mask
+        )  / tf.reduce_sum(batch_mask)
 
   return entropy
 
@@ -243,7 +247,7 @@ def compute_policy_log_probs(available_actions, policy, actions):
       not available for a specific (state, action) pair.
   """
   def compute_log_probs(probs, labels):
-    probs = tf.maximum(probs, 1e-10)
+    probs = tf.maximum(probs, 1e-12)
      # Gather arbitrary id for unused arguments (log probs will be masked)
     labels = tf.maximum(labels, 0)
     return tf.log(tf.gather(probs, labels, axis=1))

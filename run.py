@@ -50,7 +50,7 @@ parser.add_argument('--summary_iters', type=int, default=50,
                     help='record summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
                     help='store checkpoint after this many iterations')
-parser.add_argument('--entropy_weight', type=float, default=1e-6,
+parser.add_argument('--entropy_weight', type=float, default=1e-3,
                     help='weight of entropy penalty')
 parser.add_argument('--value_loss_weight', type=float, default=1.0,
                     help='weight of value function loss')
