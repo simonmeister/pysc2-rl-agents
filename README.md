@@ -3,8 +3,7 @@
 ## TODO
 - add missing flat observations in pre_processing.py
 - only consider the actions that can be used in a specific map
-- more detailed tensorboard logging related to different fn arguments?
-- resolve all other TODOs in the files
+- more detailed tensorboard logging related to different fn arguments
 
 ## Usage
 For example, `python run.py my_test --envs 1`.
