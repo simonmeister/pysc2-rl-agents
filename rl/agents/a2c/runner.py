@@ -45,7 +45,7 @@ def actions_to_pysc2(actions, size):
     for arg_type in FUNCTIONS._func_list[a_0].args:
       arg_id = arg_ids[arg_type][n]
       if is_spatial_action[arg_type]:
-        arg = [arg_id % width, arg_id // height] # TODO verify dim order (x, y) is correct
+        arg = [arg_id % width, arg_id // height]
       else:
         arg = [arg_id]
       a_l.append(arg)

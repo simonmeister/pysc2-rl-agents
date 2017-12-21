@@ -96,7 +96,9 @@ class A2CAgent():
     self.loss = loss
 
     # TODO support learning rate schedule
-    opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+    opt = tf.train.AdamOptimizer(
+        learning_rate=self.learning_rate, epsilon=5e-7)
+
     self.train_op = layers.optimize_loss(
         loss=loss,
         global_step=tf.train.get_global_step(),
@@ -219,7 +221,7 @@ def compute_policy_entropy(available_actions, policy, actions):
     batch_mask = tf.to_float(arg_id != -1)
     entropy += tf.reduce_sum(
         compute_entropy(arg_pi) * batch_mask
-        )  / tf.maximum(1e-10, tf.reduce_sum(batch_mask))
+        )  / tf.maximum(1e-12, tf.reduce_sum(batch_mask))
 
   return entropy
 

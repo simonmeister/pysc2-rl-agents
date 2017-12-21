@@ -26,7 +26,7 @@ def stack_ndarray_dicts(lst, axis=0):
 def log_transform(x, scale=None):
   if scale is not None:
     x /= scale
-  return np.log(x + 1)
+  return np.log(8 * x + 1) # TODO empirically select multiplier
 
 
 class Preprocessor():
@@ -94,6 +94,7 @@ class Preprocessor():
     one-hot encodings.
     """
     height, width = spatial.shape[1:3]
+    # TODO maybe use l.index in case the pysc2 order changes in the future
     is_numeric = np.array([l.type == features.FeatureType.SCALAR for l in spec],
                           dtype=bool)
     is_categorical = np.logical_not(is_numeric)
