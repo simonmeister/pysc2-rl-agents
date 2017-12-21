@@ -38,7 +38,7 @@ class FullyConv():
 
   def input_fc(self, x):
     # TODO find out correct number of channels
-    return layers.fully_connected(x, 256, activation_fn=tf.tanh)
+    return layers.fully_connected(x, 32, activation_fn=tf.tanh)
 
   def non_spatial_output(self, x, channels):
     logits = layers.fully_connected(x, channels, activation_fn=None)

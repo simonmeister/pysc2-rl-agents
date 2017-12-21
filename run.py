@@ -50,11 +50,11 @@ parser.add_argument('--summary_iters', type=int, default=50,
                     help='record summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
                     help='store checkpoint after this many iterations')
-parser.add_argument('--entropy_weight', type=float, default=1e-3,
+parser.add_argument('--entropy_weight', type=float, default=1e-6,
                     help='weight of entropy penalty')
 parser.add_argument('--value_loss_weight', type=float, default=1.0,
                     help='weight of value function loss')
-parser.add_argument('--lr', type=float, default=2e-4,
+parser.add_argument('--lr', type=float, default=1e-4,
                     help='learning rate')
 parser.add_argument('--save_dir', type=str, default='out/models',
                     help='root directory for checkpoint storage')
@@ -65,7 +65,7 @@ args = parser.parse_args()
 # TODO write args to config file and store together with summaries (https://pypi.python.org/pypi/ConfigArgParse)
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 
 ckpt_path = os.path.join(args.save_dir, args.experiment_id)

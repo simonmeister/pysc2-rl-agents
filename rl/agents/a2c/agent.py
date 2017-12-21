@@ -96,7 +96,7 @@ class A2CAgent():
     self.loss = loss
 
     # TODO support learning rate schedule
-    opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate)
+    opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
     self.train_op = layers.optimize_loss(
         loss=loss,
         global_step=tf.train.get_global_step(),
