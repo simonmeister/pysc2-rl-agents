@@ -2,7 +2,6 @@
 
 ## TODO
 - add missing flat observations in pre_processing.py
-- only consider the actions that can be used in a specific map
 - more detailed tensorboard logging related to different fn arguments
 
 ## Usage
