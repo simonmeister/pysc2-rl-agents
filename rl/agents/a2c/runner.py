@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from pysc2.lib.actions import FunctionCall, FUNCTIONS
+from pysc2.lib.actions import TYPES as ACTION_TYPES
 
 from rl.pre_processing import Preprocessor
 from rl.pre_processing import is_spatial_action, stack_ndarray_dicts
@@ -52,6 +53,19 @@ def actions_to_pysc2(actions, size):
     action = FunctionCall(a_0, a_l)
     actions_list.append(action)
   return actions_list
+
+
+def mask_unused_argument_samples(actions):
+  """Replace sampled argument id by -1 for all arguments not used
+  in a steps action (in-place).
+  """
+  fn_id, arg_ids = actions
+  for n in range(fn_id.shape[0]):
+    a_0 = fn_id[n]
+    unused_types = set(ACTION_TYPES) - set(FUNCTIONS._func_list[a_0].args)
+    for arg_type in unused_types:
+      arg_ids[arg_type][n] = -1
+  return (fn_id, arg_ids)
 
 
 class A2CRunner():
@@ -129,6 +143,7 @@ class A2CRunner():
 
     for n in range(self.n_steps):
       actions, value_estimate = self.agent.step(last_obs)
+      actions = mask_unused_argument_samples(actions)
       size = last_obs['screen'].shape[1:3]
 
       values[n, :] = value_estimate
