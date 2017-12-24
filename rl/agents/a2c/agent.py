@@ -72,7 +72,7 @@ class A2CAgent():
     self.policy = policy
     self.value = value
 
-    fn_id = tf.placeholder(tf.int32, [None, ], 'fn_id')
+    fn_id = tf.placeholder(tf.int32, [None], 'fn_id')
     arg_ids = {
         k: tf.placeholder(tf.int32, [None], 'arg_{}_id'.format(k.id))
         for k in policy[1].keys()}
@@ -259,6 +259,9 @@ def compute_policy_log_probs(available_actions, policy, actions):
       each value is a tensor of shape [num_batch] representing the selected
       argument or actions ids. The argument id will be -1 if the argument is
       not available for a specific (state, action) pair.
+
+  Returns:
+    log_probs: a tensor of shape [num_batch]
   """
   def compute_log_probs(probs, labels):
      # Gather arbitrary id for unused arguments (log probs will be masked)

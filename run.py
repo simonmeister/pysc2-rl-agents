@@ -26,13 +26,13 @@ parser.add_argument('--train', action='store_false',
                     help='if false, episode scores are evaluated')
 parser.add_argument('--ow', action='store_true',
                     help='overwrite existing experiments (if --train=True)')
-parser.add_argument('--map_name', type=str, default='MoveToBeacon',
+parser.add_argument('--map', type=str, default='MoveToBeacon',
                     help='name of SC2 map')
-parser.add_argument('--visualize', action='store_true',
-                    help='render with pygame (implies --envs=1)')
-parser.add_argument('--max_windows', type=int, default=2,
+parser.add_argument('--vis', action='store_true',
+                    help='render with pygame')
+parser.add_argument('--max_windows', type=int, default=1,
                     help='maximum number of visualization windows to open')
-parser.add_argument('--resolution', type=int, default=32,
+parser.add_argument('--res', type=int, default=32,
                     help='screen and minimap resolution')
 parser.add_argument('--envs', type=int, default=64,
                     help='number of environments simulated in parallel')
@@ -85,15 +85,15 @@ def main():
       shutil.rmtree(ckpt_path, ignore_errors=True)
       shutil.rmtree(summary_path, ignore_errors=True)
 
-    size_px = (args.resolution, args.resolution)
+    size_px = (args.res, args.res)
     env_args = dict(
-        map_name=args.map_name,
+        map_name=args.map,
         step_mul=args.step_mul,
         game_steps_per_episode=0,
         screen_size_px=size_px,
         minimap_size_px=size_px)
     vis_env_args = env_args.copy()
-    vis_env_args['visualize'] = args.visualize
+    vis_env_args['visualize'] = args.vis
     num_vis = min(args.envs, args.max_windows)
     env_fns = [partial(make_sc2env, **vis_env_args)] * num_vis
     num_no_vis = args.envs - num_vis
@@ -101,7 +101,6 @@ def main():
       env_fns.extend([partial(make_sc2env, **env_args)] * num_no_vis)
 
     envs = SubprocVecEnv(env_fns)
-    # envs = SingleEnv(make_sc2env(**env_args))
 
     sess = tf.Session()
     summary_writer = tf.summary.FileWriter(summary_path)
@@ -121,7 +120,7 @@ def main():
         n_steps=args.steps_per_batch)
 
     static_shape_channels = runner.preproc.get_input_channels()
-    agent.build(static_shape_channels, resolution=args.resolution, scope='A2C')
+    agent.build(static_shape_channels, resolution=args.res, scope='A2C')
 
     if os.path.exists(ckpt_path):
       agent.load(ckpt_path)

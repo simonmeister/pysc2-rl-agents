@@ -8,6 +8,101 @@ from rl.pre_processing import Preprocessor
 from rl.pre_processing import is_spatial_action, stack_ndarray_dicts
 
 
+class A2CRunner():
+  def __init__(self,
+               agent,
+               envs,
+               summary_writer=None,
+               train=True,
+               n_steps=8,
+               discount=0.99):
+    """
+    Args:
+      agent: A2CAgent instance.
+      envs: SubprocVecEnv instance.
+      summary_writer: summary writer to log episode scores.
+      train: whether to train the agent.
+      n_steps: number of agent steps for collecting rollouts.
+      discount: future reward discount.
+    """
+    self.agent = agent
+    self.envs = envs
+    self.summary_writer = summary_writer
+    self.train = train
+    self.n_steps = n_steps
+    self.discount = discount
+    self.preproc = Preprocessor(self.envs.observation_spec()[0])
+    self.episode_counter = 0
+
+  def reset(self):
+    obs_raw = self.envs.reset()
+    self.last_obs = self.preproc.preprocess_obs(obs_raw)
+
+  def _summarize_episode(self, timestep):
+    score = timestep.observation["score_cumulative"][0]
+    if self.summary_writer is not None:
+      summary = tf.Summary()
+      summary.value.add(tag='sc2/episode_score', simple_value=score)
+      self.summary_writer.add_summary(summary, self.episode_counter)
+
+    print("episode %d: score = %f" % (self.episode_counter, score))
+    self.episode_counter += 1
+
+  def run_batch(self, train_summary=False):
+    """Collect trajectories for a single batch and train (if self.train).
+
+    Args:
+      train_summary: return a Summary of the training step (losses, etc.).
+
+    Returns:
+      result: None (if not self.train) or the return value of agent.train.
+    """
+    shapes = (self.n_steps, self.envs.n_envs)
+    values = np.zeros(shapes, dtype=np.float32)
+    rewards = np.zeros(shapes, dtype=np.float32)
+    dones = np.zeros(shapes, dtype=np.float32)
+    all_obs = []
+    all_actions = []
+
+    last_obs = self.last_obs
+
+    for n in range(self.n_steps):
+      actions, value_estimate = self.agent.step(last_obs)
+      actions = mask_unused_argument_samples(actions)
+      size = last_obs['screen'].shape[1:3]
+
+      values[n, :] = value_estimate
+      all_obs.append(last_obs)
+      all_actions.append(actions)
+
+      pysc2_actions = actions_to_pysc2(actions, size)
+      obs_raw = self.envs.step(pysc2_actions)
+      last_obs = self.preproc.preprocess_obs(obs_raw)
+      rewards[n, :] = [t.reward for t in obs_raw]
+      dones[n, :] = [t.last() for t in obs_raw]
+
+      for t in obs_raw:
+        if t.last():
+          self._summarize_episode(t)
+
+    next_values = self.agent.get_value(last_obs)
+
+    returns, advs = compute_returns_advantages(
+        rewards, dones, values, next_values, self.discount)
+
+    actions = stack_and_flatten_actions(all_actions)
+    obs = flatten_first_dims_dict(stack_ndarray_dicts(all_obs))
+    returns = flatten_first_dims(returns)
+    advs = flatten_first_dims(advs)
+
+    if self.train:
+      return self.agent.train(
+          obs, actions, returns, advs,
+          summary=train_summary)
+
+    return None
+
+
 def compute_returns_advantages(rewards, dones, values, next_values, discount):
   """Compute returns and advantages from received rewards and value estimates.
 
@@ -68,111 +163,19 @@ def mask_unused_argument_samples(actions):
   return (fn_id, arg_ids)
 
 
-class A2CRunner():
-  def __init__(self,
-               agent,
-               envs,
-               summary_writer=None,
-               train=True,
-               n_steps=8,
-               discount=0.99):
-    """
-    Args:
-      agent: A2CAgent instance.
-      envs: SubprocVecEnv instance.
-      summary_writer: summary writer to log episode scores.
-      train: whether to train the agent.
-      n_steps: number of agent steps for collecting rollouts.
-      discount: future reward discount.
-    """
-    self.agent = agent
-    self.envs = envs
-    self.summary_writer = summary_writer
-    self.train = train
-    self.n_steps = n_steps
-    self.discount = discount
-    self.preproc = Preprocessor(self.envs.observation_spec()[0])
-    self.episode_counter = 0
+def flatten_first_dims(x):
+  new_shape = [x.shape[0] * x.shape[1]] + list(x.shape[2:])
+  return x.reshape(*new_shape)
 
-  def reset(self):
-    obs_raw = self.envs.reset()
-    self.last_obs = self.preproc.preprocess_obs(obs_raw)
 
-  def _summarize_episode(self, timestep):
-    score = timestep.observation["score_cumulative"][0]
-    if self.summary_writer is not None:
-      summary = tf.Summary()
-      summary.value.add(tag='sc2/episode_score', simple_value=score)
-      self.summary_writer.add_summary(summary, self.episode_counter)
+def flatten_first_dims_dict(x):
+  return {k: flatten_first_dims(v) for k, v in x.items()}
 
-    print("episode %d: score = %f" % (self.episode_counter, score))
-    self.episode_counter += 1
 
-  def run_batch(self, train_summary=False):
-    """Collect trajectories for a single batch and train (if self.train).
-
-    Args:
-      train_summary: return a Summary of the training step (losses, etc.).
-
-    Returns:
-      result: None (if not self.train) or the return value of agent.train.
-    """
-    def flatten_first_dims(x):
-      new_shape = [x.shape[0] * x.shape[1]] + list(x.shape[2:])
-      return x.reshape(*new_shape)
-
-    def flatten_first_dims_dict(x):
-      return {k: flatten_first_dims(v) for k, v in x.items()}
-
-    def stack_and_flatten_actions(lst, axis=0):
-      fn_id_list, arg_dict_list = zip(*lst)
-      fn_id = np.stack(fn_id_list, axis=axis)
-      fn_id = flatten_first_dims(fn_id)
-      arg_ids = stack_ndarray_dicts(arg_dict_list, axis=axis)
-      arg_ids = flatten_first_dims_dict(arg_ids)
-      return (fn_id, arg_ids)
-
-    shapes = (self.n_steps, self.envs.n_envs)
-    values = np.zeros(shapes, dtype=np.float32)
-    rewards = np.zeros(shapes, dtype=np.float32)
-    dones = np.zeros(shapes, dtype=np.float32)
-    all_obs = []
-    all_actions = []
-
-    last_obs = self.last_obs
-
-    for n in range(self.n_steps):
-      actions, value_estimate = self.agent.step(last_obs)
-      actions = mask_unused_argument_samples(actions)
-      size = last_obs['screen'].shape[1:3]
-
-      values[n, :] = value_estimate
-      all_obs.append(last_obs)
-      all_actions.append(actions)
-
-      pysc2_actions = actions_to_pysc2(actions, size)
-      obs_raw = self.envs.step(pysc2_actions)
-      last_obs = self.preproc.preprocess_obs(obs_raw)
-      rewards[n, :] = [t.reward for t in obs_raw]
-      dones[n, :] = [t.last() for t in obs_raw]
-
-      for t in obs_raw:
-        if t.last():
-          self._summarize_episode(t)
-
-    next_values = self.agent.get_value(last_obs)
-
-    returns, advs = compute_returns_advantages(
-        rewards, dones, values, next_values, self.discount)
-
-    actions = stack_and_flatten_actions(all_actions)
-    obs = flatten_first_dims_dict(stack_ndarray_dicts(all_obs))
-    returns = flatten_first_dims(returns)
-    advs = flatten_first_dims(advs)
-
-    if self.train:
-      return self.agent.train(
-          obs, actions, returns, advs,
-          summary=train_summary)
-
-    return None
+def stack_and_flatten_actions(lst, axis=0):
+  fn_id_list, arg_dict_list = zip(*lst)
+  fn_id = np.stack(fn_id_list, axis=axis)
+  fn_id = flatten_first_dims(fn_id)
+  arg_ids = stack_ndarray_dicts(arg_dict_list, axis=axis)
+  arg_ids = flatten_first_dims_dict(arg_ids)
+  return (fn_id, arg_ids)
