@@ -85,6 +85,8 @@ class A2CRunner():
         if t.last():
           self._summarize_episode(t)
 
+    self.last_obs = last_obs
+
     next_values = self.agent.get_value(last_obs)
 
     returns, advs = compute_returns_advantages(
