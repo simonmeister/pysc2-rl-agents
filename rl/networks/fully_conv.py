@@ -1,10 +1,11 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow.contrib import layers
 
 from pysc2.lib import actions
 from pysc2.lib import features
 
-from rl.pre_processing import is_spatial_action, NUM_FUNCTIONS
+from rl.pre_processing import is_spatial_action, NUM_FUNCTIONS, FLAT_FEATURES
 
 
 class FullyConv():
@@ -16,6 +17,41 @@ class FullyConv():
 
   def __init__(self, data_format='NHWC'):
     self.data_format = data_format
+
+  def embed_obs(self, x, spec, spatial):
+    layers = tf.split(x, len(spec), -1)
+    embed_fn = self.embed_spatial if spatial else self.embed_flat
+    out_list = []
+    for s in spec:
+      layer = layers[s.index]
+      if s.type == features.FeatureType.CATEGORICAL:
+        dims = np.round(np.log2(s.scale)).astype(np.int32).item()
+        out = embed_fn(layer, dims)
+      elif s.type == features.FeatureType.SCALAR:
+        out = self.log_transform(layer, s.scale)
+      else:
+        out = layer
+      out_list.append(out)
+    if spatial:
+      return self.concat2d(out_list)
+    return tf.concat(out_list, 1)
+
+  def log_transform(self, x, scale):
+    return tf.log(8 * x / scale + 1)
+
+  def embed_spatial(self, x, dims):
+    return layers.conv2d(
+        x, dims,
+        kernel_size=1,
+        stride=1,
+        padding='SAME',
+        activation_fn=None,
+        data_format=self.data_format)
+
+  def embed_flat(self, x, dims):
+    return layers.fully_connected(
+        x, dims,
+        activation_fn=None)
 
   def input_conv(self, x, name):
     conv1 = layers.conv2d(
@@ -35,10 +71,6 @@ class FullyConv():
         data_format=self.data_format,
         scope="%s/conv2" % name)
     return conv2
-
-  def input_fc(self, x):
-    # TODO find out correct number of channels
-    return layers.fully_connected(x, 32, activation_fn=tf.tanh)
 
   def non_spatial_output(self, x, channels):
     logits = layers.fully_connected(x, channels, activation_fn=None)
@@ -78,22 +110,28 @@ class FullyConv():
       return tf.transpose(map2d, [0, 3, 1, 2])
     return map2d
 
-  def build(self, screen_input, minimap_input, non_spatial_input):
-    screen_out = self.input_conv(self.from_nhwc(screen_input), 'screen')
-    minimap_out = self.input_conv(self.from_nhwc(minimap_input), 'minimap')
-    non_spatial_out = self.input_fc(non_spatial_input)
+  def build(self, screen_input, minimap_input, flat_input):
+    screen_emb = self.embed_obs(screen_input, features.SCREEN_FEATURES, True)
+    minimap_emb = self.embed_obs(minimap_input, features.MINIMAP_FEATURES, True)
+    flat_emb = self.embed_obs(flat_input, FLAT_FEATURES, False)
+    #screen_emb = screen_input
+    #minimap_emb = minimap_input
+    #flat_emb = flat_input
+
+    screen_out = self.input_conv(self.from_nhwc(screen_emb), 'screen')
+    minimap_out = self.input_conv(self.from_nhwc(minimap_emb), 'minimap')
 
     size2d = self.get_size2d(screen_out)
-    broadcast_out = self.broadcast_along_channels(non_spatial_out, size2d)
+    broadcast_out = self.broadcast_along_channels(flat_emb, size2d)
 
-    state_out = self.concat2d([screen_out, minimap_out, broadcast_out])
+    #state_out = self.concat2d([screen_out, minimap_out, broadcast_out])
+    state_out = self.concat2d([screen_out, minimap_out])
     flat_out = layers.flatten(self.to_nhwc(state_out))
     fc = layers.fully_connected(flat_out, 256, activation_fn=tf.nn.relu)
 
     value = layers.fully_connected(fc, 1, activation_fn=None)
     value = tf.reshape(value, [-1])
 
-    # TODO for minigames, only model available actions?
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
     args_out = dict()
     for arg_type in actions.TYPES:
