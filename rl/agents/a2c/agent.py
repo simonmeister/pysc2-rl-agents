@@ -3,9 +3,6 @@ import os
 import tensorflow as tf
 from tensorflow.contrib import layers
 
-# See https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/distributions/categorical.py
-from tensorflow.contrib.distributions import Categorical
-
 from pysc2.lib.actions import TYPES as ACTION_TYPES
 
 from rl.networks.fully_conv import FullyConv
@@ -230,8 +227,8 @@ def sample_actions(available_actions, policy):
   """Sample function ids and arguments from a predicted policy."""
 
   def sample(probs):
-    dist = Categorical(probs=probs)
-    return dist.sample()
+    u = tf.random_uniform(tf.shape(probs))
+    return tf.argmax(tf.log(u) / probs, axis=1)
 
   fn_pi, arg_pis = policy
   fn_pi = mask_unavailable_actions(available_actions, fn_pi)
