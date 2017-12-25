@@ -134,7 +134,7 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
 
 def actions_to_pysc2(actions, size):
   """Convert agent action representation to FunctionCall representation."""
-  width, height = size
+  height, width = size
   fn_id, arg_ids = actions
   actions_list = []
   for n in range(fn_id.shape[0]):

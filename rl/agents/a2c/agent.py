@@ -82,7 +82,7 @@ class A2CAgent():
     log_probs = compute_policy_log_probs(available_actions, policy, actions)
 
     policy_loss = -tf.reduce_mean(advs * log_probs)
-    value_loss = tf.reduce_mean(tf.square(returns - value) / 2)
+    value_loss = tf.reduce_mean(tf.square(returns - value))
     entropy = compute_policy_entropy(available_actions, policy, actions)
 
     loss = (policy_loss
