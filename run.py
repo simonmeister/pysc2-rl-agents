@@ -38,14 +38,16 @@ parser.add_argument('--envs', type=int, default=64,
                     help='number of environments simulated in parallel')
 parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
-parser.add_argument('--steps_per_batch', type=int, default=40,
+parser.add_argument('--steps_per_batch', type=int, default=8,
                     help='number of agent steps when collecting trajectories for a single batch')
-parser.add_argument('--discount', type=float, default=0.99,
+parser.add_argument('--discount', type=float, default=0.95,
                     help='discount for future rewards')
 parser.add_argument('--iters', type=int, default=-1,
                     help='number of iterations to run (-1 to run forever)')
 parser.add_argument('--seed', type=int, default=123,
                     help='random seed')
+parser.add_argument('--gpu', type=str, default='0',
+                    help='gpu device id')
 parser.add_argument('--summary_iters', type=int, default=1,
                     help='record summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
@@ -65,7 +67,7 @@ args = parser.parse_args()
 # TODO write args to config file and store together with summaries (https://pypi.python.org/pypi/ConfigArgParse)
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 
 ckpt_path = os.path.join(args.save_dir, args.experiment_id)
@@ -120,7 +122,7 @@ def main():
         n_steps=args.steps_per_batch)
 
     static_shape_channels = runner.preproc.get_input_channels()
-    agent.build(static_shape_channels, resolution=args.res, scope='A2C')
+    agent.build(static_shape_channels, resolution=args.res)
 
     if os.path.exists(ckpt_path):
       agent.load(ckpt_path)

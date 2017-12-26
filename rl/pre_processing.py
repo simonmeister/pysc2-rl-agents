@@ -29,7 +29,7 @@ FlatFeature = namedtuple('FlatFeatures', ['index', 'type', 'scale'])
 
 FLAT_FEATURES_tuples = [
   (features.FeatureType.CATEGORICAL, NUM_PLAYERS)
-] + 10 * [(features.FeatureType.CATEGORICAL, 1)]
+] + 10 * [(features.FeatureType.SCALAR, 1)]
 
 FLAT_FEATURES = [FlatFeature(i, *t) for i, t in enumerate(FLAT_FEATURES_tuples)]
 

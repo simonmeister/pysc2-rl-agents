@@ -28,14 +28,14 @@ class A2CAgent():
     self.max_gradient_norm = max_gradient_norm
     self.train_step = 0
 
-  def build(self, static_shape_channels, resolution, scope, reuse=None):
-    with tf.variable_scope(scope, reuse=reuse):
-      self._build(static_shape_channels, resolution)
-      variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
-      self.saver = tf.train.Saver(variables)
-      self.init_op = tf.variables_initializer(variables)
-      train_summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope=scope)
-      self.train_summary_op = tf.summary.merge(train_summaries)
+  def build(self, static_shape_channels, resolution, scope=None, reuse=None):
+    #with tf.variable_scope(scope, reuse=reuse):
+    self._build(static_shape_channels, resolution)
+    variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
+    self.saver = tf.train.Saver(variables)
+    self.init_op = tf.variables_initializer(variables)
+    train_summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope=scope)
+    self.train_summary_op = tf.summary.merge(train_summaries)
 
   def _build(self, static_shape_channels, resolution):
     """Create tensorflow graph for A2C agent.
@@ -86,15 +86,15 @@ class A2CAgent():
             + value_loss * self.value_loss_weight
             - entropy * self.entropy_weight)
 
+    tf.summary.scalar('entropy', entropy)
+    tf.summary.scalar('loss', loss)
     tf.summary.scalar('loss/policy', policy_loss)
     tf.summary.scalar('loss/value', value_loss)
-    tf.summary.scalar('loss/entropy', entropy)
-    tf.summary.scalar('loss/total', loss)
     self.loss = loss
 
     # TODO support learning rate schedule
-    opt = tf.train.AdamOptimizer(
-        learning_rate=self.learning_rate, epsilon=5e-7)
+    opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=5e-7)
+    #opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate, decay=0.99)
 
     self.train_op = layers.optimize_loss(
         loss=loss,
@@ -211,14 +211,19 @@ def compute_policy_entropy(available_actions, policy, actions):
   fn_pi, arg_pis = policy
   fn_pi = mask_unavailable_actions(available_actions, fn_pi)
   entropy = tf.reduce_mean(compute_entropy(fn_pi))
+  tf.summary.scalar('entropy/fn', entropy)
 
   for arg_type in ACTION_TYPES:
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
-    batch_mask = tf.to_float(arg_id != -1)
-    entropy += tf.reduce_sum(
+    batch_mask = tf.to_float(tf.not_equal(arg_id, -1))
+    arg_entropy = tf.reduce_sum(
         compute_entropy(arg_pi) * batch_mask
-        )  / tf.maximum(1e-12, tf.reduce_sum(batch_mask))
+        )  / tf.maximum(1.0, tf.reduce_sum(batch_mask))
+    entropy += arg_entropy
+    tf.summary.scalar('used/arg/%s' % arg_type.name,
+                      tf.reduce_mean(batch_mask))
+    tf.summary.scalar('entropy/arg/%s' % arg_type.name, arg_entropy)
 
   return entropy
 
@@ -258,7 +263,7 @@ def compute_policy_log_probs(available_actions, policy, actions):
       not available for a specific (state, action) pair.
 
   Returns:
-    log_probs: a tensor of shape [num_batch]
+    log_prob: a tensor of shape [num_batch]
   """
   def compute_log_probs(probs, labels):
      # Gather arbitrary id for unused arguments (log probs will be masked)
@@ -269,15 +274,16 @@ def compute_policy_log_probs(available_actions, policy, actions):
   fn_pi, arg_pis = policy
   fn_pi = mask_unavailable_actions(available_actions, fn_pi)
   fn_log_prob = compute_log_probs(fn_pi, fn_id)
+  tf.summary.scalar('log_prob/fn', tf.reduce_mean(fn_log_prob))
 
-  # TODO logging for each arg_type
-  total = fn_log_prob
+  log_prob = fn_log_prob
   for arg_type in ACTION_TYPES:
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
     arg_log_prob = compute_log_probs(arg_pi, arg_id)
-    # Mask argument log prob if the argument is not relevant
-    arg_log_prob *= (arg_id != -1)
-    total += arg_log_prob
+    arg_log_prob *= tf.to_float(tf.not_equal(arg_id, -1))
+    log_prob += arg_log_prob
+    tf.summary.scalar('log_prob/arg/%s' % arg_type.name,
+                      tf.reduce_mean(arg_log_prob))
 
-  return total
+  return log_prob

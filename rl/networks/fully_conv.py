@@ -26,6 +26,7 @@ class FullyConv():
       layer = layers[s.index]
       if s.type == features.FeatureType.CATEGORICAL:
         dims = np.round(np.log2(s.scale)).astype(np.int32).item()
+        dims = max(dims, 1)
         out = embed_fn(layer, dims)
       elif s.type == features.FeatureType.SCALAR:
         out = self.log_transform(layer, s.scale)
@@ -33,7 +34,7 @@ class FullyConv():
         out = layer
       out_list.append(out)
     if spatial:
-      return self.concat2d(out_list)
+      return tf.concat(out_list, 3)
     return tf.concat(out_list, 1)
 
   def log_transform(self, x, scale):
@@ -114,9 +115,6 @@ class FullyConv():
     screen_emb = self.embed_obs(screen_input, features.SCREEN_FEATURES, True)
     minimap_emb = self.embed_obs(minimap_input, features.MINIMAP_FEATURES, True)
     flat_emb = self.embed_obs(flat_input, FLAT_FEATURES, False)
-    #screen_emb = screen_input
-    #minimap_emb = minimap_input
-    #flat_emb = flat_input
 
     screen_out = self.input_conv(self.from_nhwc(screen_emb), 'screen')
     minimap_out = self.input_conv(self.from_nhwc(minimap_emb), 'minimap')
