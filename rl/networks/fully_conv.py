@@ -19,23 +19,22 @@ class FullyConv():
     self.data_format = data_format
 
   def embed_obs(self, x, spec, spatial):
-    layers = tf.split(x, len(spec), -1)
+    feats = tf.split(x, len(spec), -1)
     embed_fn = self.embed_spatial if spatial else self.embed_flat
     out_list = []
     for s in spec:
-      layer = layers[s.index]
+      f = feats[s.index]
       if s.type == features.FeatureType.CATEGORICAL:
         dims = np.round(np.log2(s.scale)).astype(np.int32).item()
         dims = max(dims, 1)
-        out = embed_fn(layer, dims)
+        indices = tf.one_hot(tf.to_int32(tf.squeeze(f, -1)), s.scale)
+        out = embed_fn(indices, dims)
       elif s.type == features.FeatureType.SCALAR:
-        out = self.log_transform(layer, s.scale)
+        out = self.log_transform(f, s.scale)
       else:
-        out = layer
+        out = f
       out_list.append(out)
-    if spatial:
-      return tf.concat(out_list, 3)
-    return tf.concat(out_list, 1)
+    return tf.concat(out_list, -1)
 
   def log_transform(self, x, scale):
     return tf.log(8 * x / scale + 1)
@@ -46,13 +45,13 @@ class FullyConv():
         kernel_size=1,
         stride=1,
         padding='SAME',
-        activation_fn=None,
+        activation_fn=tf.nn.relu,
         data_format=self.data_format)
 
   def embed_flat(self, x, dims):
     return layers.fully_connected(
         x, dims,
-        activation_fn=None)
+        activation_fn=tf.nn.relu)
 
   def input_conv(self, x, name):
     conv1 = layers.conv2d(
@@ -133,6 +132,12 @@ class FullyConv():
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
     args_out = dict()
     for arg_type in actions.TYPES:
+      ##
+      if arg_type.name != 'screen':
+        arg_out = tf.ones([tf.unstack(tf.shape(screen_emb))[0], 1])
+        args_out[arg_type] = arg_out
+        continue
+      ##
       if is_spatial_action[arg_type]:
         arg_out = self.to_nhwc(self.spatial_output(state_out))
       else:

@@ -8,34 +8,6 @@ from rl.pre_processing import Preprocessor
 from rl.pre_processing import is_spatial_action, stack_ndarray_dicts
 
 
-def general_n_step_advantage(
-        one_step_rewards: np.ndarray,
-        value_estimates: np.ndarray,
-        discount: float,
-        lambda_par: float
-):
-    """
-    :param one_step_rewards: [n_env, n_timesteps]
-    :param value_estimates: [n_env, n_timesteps + 1]
-    :param discount: "gamma" in https://arxiv.org/pdf/1707.06347.pdf and most of the rl-literature
-    :param lambda_par: lambda in https://arxiv.org/pdf/1707.06347.pdf
-    :return:
-    """
-    assert 0.0 < discount <= 1.0
-    assert 0.0 <= lambda_par <= 1.0
-    batch_size, timesteps = one_step_rewards.shape
-    assert value_estimates.shape == (batch_size, timesteps + 1)
-    delta = one_step_rewards + discount * value_estimates[:, 1:] - value_estimates[:, :-1]
-
-    if lambda_par == 0:
-        return delta
-
-    delta_rev = delta[:, ::-1]
-    adjustment = (discount * lambda_par) ** np.arange(timesteps, 0, -1)
-    advantage = (np.cumsum(delta_rev * adjustment, axis=1) / adjustment)[:, ::-1]
-    return advantage
-
-
 class A2CRunner():
   def __init__(self,
                agent,
@@ -119,13 +91,6 @@ class A2CRunner():
 
     returns, advs = compute_returns_advantages(
         rewards, dones, values, next_values, self.discount)
-    #advs = general_n_step_advantage(
-    #    rewards.transpose(),
-    #    np.concatenate([values, np.expand_dims(next_values, 0)], axis=0).transpose(),
-    #    self.discount,
-    #    1.0
-    #    ).transpose()
-    returns = advs + values
 
     actions = stack_and_flatten_actions(all_actions)
     obs = flatten_first_dims_dict(stack_ndarray_dicts(all_obs))

@@ -90,6 +90,9 @@ class A2CAgent():
     tf.summary.scalar('loss', loss)
     tf.summary.scalar('loss/policy', policy_loss)
     tf.summary.scalar('loss/value', value_loss)
+    tf.summary.scalar('rl/value', tf.reduce_mean(value))
+    tf.summary.scalar('rl/returns', tf.reduce_mean(returns))
+    tf.summary.scalar('rl/advs', tf.reduce_mean(advs))
     self.loss = loss
 
     # TODO support learning rate schedule
