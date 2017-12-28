@@ -122,7 +122,6 @@ def compute_returns_advantages(rewards, dones, values, next_values, discount):
     advs: array of shape [n_steps, n_env]
   """
   returns = np.zeros([rewards.shape[0] + 1, rewards.shape[1]])
-  advs = np.zeros_like(rewards)
 
   returns[-1, :] = next_values
   for t in reversed(range(rewards.shape[0])):
