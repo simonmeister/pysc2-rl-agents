@@ -6,6 +6,7 @@ from tensorflow.contrib import layers
 from pysc2.lib.actions import TYPES as ACTION_TYPES
 
 from rl.networks.fully_conv import FullyConv
+from rl.util import safe_log, safe_div
 
 
 class A2CAgent():
@@ -186,11 +187,6 @@ class A2CAgent():
     print("Loaded agent at train_step %d" % self.train_step)
 
 
-def log_clip(x):
-  """Logarithm when some values in x might be zero."""
-  return tf.log(tf.maximum(x, 1e-12))
-
-
 def mask_unavailable_actions(available_actions, fn_pi):
   fn_pi *= available_actions
   fn_pi /= tf.reduce_sum(fn_pi, axis=1, keep_dims=True)
@@ -207,7 +203,7 @@ def compute_policy_entropy(available_actions, policy, actions):
   """
 
   def compute_entropy(probs):
-    return -tf.reduce_sum(log_clip(probs) * probs, axis=-1)
+    return -tf.reduce_sum(safe_log(probs) * probs, axis=-1)
 
   _, arg_ids = actions
 
@@ -220,9 +216,9 @@ def compute_policy_entropy(available_actions, policy, actions):
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
     batch_mask = tf.to_float(tf.not_equal(arg_id, -1))
-    arg_entropy = tf.reduce_sum(
-        compute_entropy(arg_pi) * batch_mask
-        )  / tf.maximum(1.0, tf.reduce_sum(batch_mask))
+    arg_entropy = safe_div(
+        tf.reduce_sum(compute_entropy(arg_pi) * batch_mask),
+        tf.reduce_sum(batch_mask))
     entropy += arg_entropy
     tf.summary.scalar('used/arg/%s' % arg_type.name,
                       tf.reduce_mean(batch_mask))
@@ -271,7 +267,7 @@ def compute_policy_log_probs(available_actions, policy, actions):
   def compute_log_probs(probs, labels):
      # Gather arbitrary id for unused arguments (log probs will be masked)
     labels = tf.maximum(labels, 0)
-    return log_clip(tf.gather(probs, labels, axis=1))
+    return safe_log(tf.gather(probs, labels, axis=1))
 
   fn_id, arg_ids = actions
   fn_pi, arg_pis = policy

@@ -40,7 +40,7 @@ parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
 parser.add_argument('--steps_per_batch', type=int, default=8,
                     help='number of agent steps when collecting trajectories for a single batch')
-parser.add_argument('--discount', type=float, default=0.95,
+parser.add_argument('--discount', type=float, default=0.99,
                     help='discount for future rewards')
 parser.add_argument('--iters', type=int, default=-1,
                     help='number of iterations to run (-1 to run forever)')
@@ -52,7 +52,7 @@ parser.add_argument('--summary_iters', type=int, default=1,
                     help='record summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
                     help='store checkpoint after this many iterations')
-parser.add_argument('--entropy_weight', type=float, default=1e-6,
+parser.add_argument('--entropy_weight', type=float, default=1e-3,
                     help='weight of entropy penalty')
 parser.add_argument('--value_loss_weight', type=float, default=1.0,
                     help='weight of value function loss')

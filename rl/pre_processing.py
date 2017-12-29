@@ -25,11 +25,11 @@ def stack_ndarray_dicts(lst, axis=0):
   return res
 
 
-FlatFeature = namedtuple('FlatFeatures', ['index', 'type', 'scale'])
+FlatFeature = namedtuple('FlatFeatures', ['index', 'type', 'scale', 'name'])
 
 FLAT_FEATURES_tuples = [
-  (features.FeatureType.CATEGORICAL, NUM_PLAYERS)
-] + 10 * [(features.FeatureType.SCALAR, 1)]
+  (features.FeatureType.CATEGORICAL, NUM_PLAYERS, 'player_cat')
+] + 10 * [(features.FeatureType.SCALAR, 1, 'player_scalar')]
 
 FLAT_FEATURES = [FlatFeature(i, *t) for i, t in enumerate(FLAT_FEATURES_tuples)]
 

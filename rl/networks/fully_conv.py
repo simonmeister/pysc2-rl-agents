@@ -25,6 +25,10 @@ class FullyConv():
     for s in spec:
       f = feats[s.index]
       if s.type == features.FeatureType.CATEGORICAL:
+        ## DEBUG
+        if s.name not in ['unit_type', 'player_relative']:
+          continue
+        ##
         dims = np.round(np.log2(s.scale)).astype(np.int32).item()
         dims = max(dims, 1)
         indices = tf.one_hot(tf.to_int32(tf.squeeze(f, -1)), s.scale)
@@ -32,7 +36,7 @@ class FullyConv():
       elif s.type == features.FeatureType.SCALAR:
         out = self.log_transform(f, s.scale)
       else:
-        out = f
+        raise NotImplementedError
       out_list.append(out)
     return tf.concat(out_list, -1)
 
@@ -132,16 +136,11 @@ class FullyConv():
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
     args_out = dict()
     for arg_type in actions.TYPES:
-      ##
-      if arg_type.name != 'screen':
-        arg_out = tf.ones([tf.unstack(tf.shape(screen_emb))[0], 1])
-        args_out[arg_type] = arg_out
-        continue
-      ##
       if is_spatial_action[arg_type]:
         arg_out = self.to_nhwc(self.spatial_output(state_out))
       else:
         arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
+        #arg_out = tf.ones([tf.unstack(tf.shape(screen_emb))[0], 1])
       args_out[arg_type] = arg_out
 
     policy = (fn_out, args_out)
