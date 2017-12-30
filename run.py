@@ -99,7 +99,7 @@ def main():
     num_vis = min(args.envs, args.max_windows)
     env_fns = [partial(make_sc2env, **vis_env_args)] * num_vis
     num_no_vis = args.envs - num_vis
-    if num_no_vis > 1:
+    if num_no_vis > 0:
       env_fns.extend([partial(make_sc2env, **env_args)] * num_no_vis)
 
     envs = SubprocVecEnv(env_fns)
