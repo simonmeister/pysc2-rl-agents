@@ -125,14 +125,11 @@ class FullyConv():
 
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
     args_out = dict()
-    #spatial_out = self.to_nhwc(self.spatial_output(state_out))
     for arg_type in actions.TYPES:
       if is_spatial_action[arg_type]:
         arg_out = self.to_nhwc(self.spatial_output(state_out))
-        #arg_out = spatial_out
       else:
         arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
-        #arg_out = tf.ones([tf.unstack(tf.shape(value))[0], 1])
       args_out[arg_type] = arg_out
 
     policy = (fn_out, args_out)
