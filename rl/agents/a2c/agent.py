@@ -2,6 +2,7 @@ import os
 
 import tensorflow as tf
 from tensorflow.contrib import layers
+from tensorflow.contrib.distributions import Categorical
 
 from pysc2.lib.actions import TYPES as ACTION_TYPES
 
@@ -212,7 +213,7 @@ def compute_policy_entropy(available_actions, policy, actions):
   entropy = tf.reduce_mean(compute_entropy(fn_pi))
   tf.summary.scalar('entropy/fn', entropy)
 
-  for arg_type in ACTION_TYPES:
+  for arg_type in arg_ids.keys():
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
     batch_mask = tf.to_float(tf.not_equal(arg_id, -1))
@@ -231,8 +232,8 @@ def sample_actions(available_actions, policy):
   """Sample function ids and arguments from a predicted policy."""
 
   def sample(probs):
-    u = tf.random_uniform(tf.shape(probs))
-    return tf.argmax(tf.log(u) / probs, axis=1)
+    dist = Categorical(probs=probs)
+    return dist.sample()
 
   fn_pi, arg_pis = policy
   fn_pi = mask_unavailable_actions(available_actions, fn_pi)
@@ -265,18 +266,19 @@ def compute_policy_log_probs(available_actions, policy, actions):
     log_prob: a tensor of shape [num_batch]
   """
   def compute_log_probs(probs, labels):
-     # Gather arbitrary id for unused arguments (log probs will be masked)
+     # Select arbitrary element for unused arguments (log probs will be masked)
     labels = tf.maximum(labels, 0)
-    return safe_log(tf.gather(probs, labels, axis=1))
+    indices = tf.stack([tf.range(tf.shape(labels)[0]), labels], axis=1)
+    return safe_log(tf.gather_nd(probs, indices)) # TODO tf.log should suffice
 
   fn_id, arg_ids = actions
   fn_pi, arg_pis = policy
-  fn_pi = mask_unavailable_actions(available_actions, fn_pi)
+  fn_pi = mask_unavailable_actions(available_actions, fn_pi) # TODO: this should be unneccessary
   fn_log_prob = compute_log_probs(fn_pi, fn_id)
   tf.summary.scalar('log_prob/fn', tf.reduce_mean(fn_log_prob))
 
   log_prob = fn_log_prob
-  for arg_type in ACTION_TYPES:
+  for arg_type in arg_ids.keys():
     arg_id = arg_ids[arg_type]
     arg_pi = arg_pis[arg_type]
     arg_log_prob = compute_log_probs(arg_pi, arg_id)

@@ -25,10 +25,6 @@ class FullyConv():
     for s in spec:
       f = feats[s.index]
       if s.type == features.FeatureType.CATEGORICAL:
-        ## DEBUG
-        if s.name not in ['unit_type', 'player_relative']:
-          continue
-        ##
         dims = np.round(np.log2(s.scale)).astype(np.int32).item()
         dims = max(dims, 1)
         indices = tf.one_hot(tf.to_int32(tf.squeeze(f, -1)), s.scale)
@@ -97,13 +93,6 @@ class FullyConv():
     return tf.tile(tf.expand_dims(tf.expand_dims(flat, 1), 2),
                    tf.stack([1, size2d[0], size2d[1], 1]))
 
-  def get_size2d(self, map2d):
-    if self.data_format == 'NCHW':
-      size = tf.shape(map2d)[2:]
-    else:
-      size = tf.shape(map2d)[1:3]
-    return tf.unstack(size)
-
   def to_nhwc(self, map2d):
     if self.data_format == 'NCHW':
       return tf.transpose(map2d, [0, 2, 3, 1])
@@ -115,6 +104,7 @@ class FullyConv():
     return map2d
 
   def build(self, screen_input, minimap_input, flat_input):
+    size2d = tf.unstack(tf.shape(screen_input)[1:3])
     screen_emb = self.embed_obs(screen_input, features.SCREEN_FEATURES, True)
     minimap_emb = self.embed_obs(minimap_input, features.MINIMAP_FEATURES, True)
     flat_emb = self.embed_obs(flat_input, FLAT_FEATURES, False)
@@ -122,7 +112,6 @@ class FullyConv():
     screen_out = self.input_conv(self.from_nhwc(screen_emb), 'screen')
     minimap_out = self.input_conv(self.from_nhwc(minimap_emb), 'minimap')
 
-    size2d = self.get_size2d(screen_out)
     broadcast_out = self.broadcast_along_channels(flat_emb, size2d)
 
     #state_out = self.concat2d([screen_out, minimap_out, broadcast_out])
@@ -135,12 +124,14 @@ class FullyConv():
 
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
     args_out = dict()
+    #spatial_out = self.to_nhwc(self.spatial_output(state_out))
     for arg_type in actions.TYPES:
       if is_spatial_action[arg_type]:
         arg_out = self.to_nhwc(self.spatial_output(state_out))
+        #arg_out = spatial_out
       else:
         arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
-        #arg_out = tf.ones([tf.unstack(tf.shape(screen_emb))[0], 1])
+        #arg_out = tf.ones([tf.unstack(tf.shape(value))[0], 1])
       args_out[arg_type] = arg_out
 
     policy = (fn_out, args_out)
