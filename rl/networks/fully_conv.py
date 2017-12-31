@@ -18,9 +18,8 @@ class FullyConv():
   def __init__(self, data_format='NHWC'):
     self.data_format = data_format
 
-  def embed_obs(self, x, spec, spatial):
+  def embed_obs(self, x, spec, embed_fn):
     feats = tf.split(x, len(spec), -1)
-    embed_fn = self.embed_spatial if spatial else self.embed_flat
     out_list = []
     for s in spec:
       f = feats[s.index]
@@ -105,9 +104,11 @@ class FullyConv():
 
   def build(self, screen_input, minimap_input, flat_input):
     size2d = tf.unstack(tf.shape(screen_input)[1:3])
-    screen_emb = self.embed_obs(screen_input, features.SCREEN_FEATURES, True)
-    minimap_emb = self.embed_obs(minimap_input, features.MINIMAP_FEATURES, True)
-    flat_emb = self.embed_obs(flat_input, FLAT_FEATURES, False)
+    screen_emb = self.embed_obs(screen_input, features.SCREEN_FEATURES,
+                                self.embed_spatial)
+    minimap_emb = self.embed_obs(minimap_input, features.MINIMAP_FEATURES,
+                                 self.embed_spatial)
+    flat_emb = self.embed_obs(flat_input, FLAT_FEATURES, self.embed_flat)
 
     screen_out = self.input_conv(self.from_nhwc(screen_emb), 'screen')
     minimap_out = self.input_conv(self.from_nhwc(minimap_emb), 'minimap')
