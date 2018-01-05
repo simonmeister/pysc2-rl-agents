@@ -162,6 +162,8 @@ def main():
     envs.close()
     summary_writer.close()
 
+    print('mean score: %f' % runner.get_mean_score())
+
 
 if __name__ == "__main__":
     main()

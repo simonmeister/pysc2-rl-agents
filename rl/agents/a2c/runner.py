@@ -33,10 +33,14 @@ class A2CRunner():
     self.discount = discount
     self.preproc = Preprocessor(self.envs.observation_spec()[0])
     self.episode_counter = 0
+    self.cumulative_score = 0.0
 
   def reset(self):
     obs_raw = self.envs.reset()
     self.last_obs = self.preproc.preprocess_obs(obs_raw)
+
+  def get_mean_score(self):
+    return self.cumulative_score / self.episode_counter
 
   def _summarize_episode(self, timestep):
     score = timestep.observation["score_cumulative"][0]
@@ -47,6 +51,7 @@ class A2CRunner():
 
     print("episode %d: score = %f" % (self.episode_counter, score))
     self.episode_counter += 1
+    return score
 
   def run_batch(self, train_summary=False):
     """Collect trajectories for a single batch and train (if self.train).
@@ -63,6 +68,7 @@ class A2CRunner():
     dones = np.zeros(shapes, dtype=np.float32)
     all_obs = []
     all_actions = []
+    all_scores = []
 
     last_obs = self.last_obs
 
@@ -83,7 +89,8 @@ class A2CRunner():
 
       for t in obs_raw:
         if t.last():
-          self._summarize_episode(t)
+          score = self._summarize_episode(t)
+          self.cumulative_score += score
 
     self.last_obs = last_obs
 
