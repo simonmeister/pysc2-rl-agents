@@ -31,6 +31,13 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 - Python 3
 - pysc2 (tested with v1.2)
 - TensorFlow (tested with 1.4.0)
+- StarCraft II and mini games (see below or [pysc2](https://github.com/deepmind/pysc2/))
+
+### Quick install guide
+- `pip install numpy tensorflow-gpu pysc2`
+- Install StarCraft II. On Linux, use [3.16.1](http://blzdistsc2-a.akamaihd.net/Linux/SC2.3.16.1.zip).
+- Download the [mini games](https://github.com/deepmind/pysc2/releases/download/v1.2/mini_games.zip)
+and extract them to your `StarcraftII/Maps/` directory.
 
 ### Run & evaluate experiments
 - train with `python run.py my_experiment`.
