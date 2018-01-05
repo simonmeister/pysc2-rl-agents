@@ -46,7 +46,7 @@ With default settings (32 environments), learning MoveToBeacon currently takes b
 - StarCraft II and mini games (see below or [pysc2](https://github.com/deepmind/pysc2/))
 
 ### Quick install guide
-- `pip install numpy tensorflow-gpu pysc2`
+- `pip install numpy tensorflow-gpu pysc2==1.2`
 - Install StarCraft II. On Linux, use [3.16.1](http://blzdistsc2-a.akamaihd.net/Linux/SC2.3.16.1.zip).
 - Download the [mini games](https://github.com/deepmind/pysc2/releases/download/v1.2/mini_games.zip)
 and extract them to your `StarcraftII/Maps/` directory.
