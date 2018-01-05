@@ -39,7 +39,7 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 - Download the [mini games](https://github.com/deepmind/pysc2/releases/download/v1.2/mini_games.zip)
 and extract them to your `StarcraftII/Maps/` directory.
 
-### Run & evaluate experiments
+### Train & run
 - train with `python run.py my_experiment --map MoveToBeacon`.
 - run trained agents with `python run.py my_experiment --map MoveToBeacon --eval`.
 
