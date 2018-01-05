@@ -40,8 +40,8 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 and extract them to your `StarcraftII/Maps/` directory.
 
 ### Run & evaluate experiments
-- train with `python run.py my_experiment`.
-- run trained agents with `python run.py my_experiment --eval`.
+- train with `python run.py my_experiment --map MoveToBeacon`.
+- run trained agents with `python run.py my_experiment --map MoveToBeacon --eval`.
 
 You can visualize the agents with the `--vis` flag. 
 See `run.py` for all arguments.
