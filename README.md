@@ -43,5 +43,6 @@ Summaries are written to `out/summary/<experiment_name>` and model checkpoints a
 
 
 ## Related repositories
-- We borrowed some code from [sc2aibot](https://github.com/pekaalto/sc2aibot)
+- [OpenAI baselines/a2c](https://github.com/openai/baselines/tree/master/baselines/a2c)
+- [sc2aibot](https://github.com/pekaalto/sc2aibot)
 - [pysc2-agents](https://github.com/xhujoy/pysc2-agents)
