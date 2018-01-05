@@ -22,7 +22,25 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 - [ ] Multi-GPU training
 
 ## Usage
-For example, `python run.py my_test_model --envs 1`.
+
+### Hardware requirements
+- for fast training, a GPU is recommended
+
+### Software requirements
+- Python 3
+- pysc2 (tested with v1.2)
+- TensorFlow (tested with 1.4.0)
+
+### Run & evaluate experiments
+- train with `python run.py my_experiment`.
+- run trained agents with `python run.py my_experiment --eval`.
+
+You can visualize the agents with the `--vis` flag. 
+See `run.py` for all arguments.
+
+Summaries are written to `out/summary/<experiment_name>` and model checkpoints are written to `out/models/<experiment_name>`.
+
+
 
 ## Related repositories
 - We borrowed some code from [sc2aibot](https://github.com/pekaalto/sc2aibot)
