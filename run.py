@@ -34,11 +34,11 @@ parser.add_argument('--max_windows', type=int, default=1,
                     help='maximum number of visualization windows to open')
 parser.add_argument('--res', type=int, default=32,
                     help='screen and minimap resolution')
-parser.add_argument('--envs', type=int, default=64,
+parser.add_argument('--envs', type=int, default=32,
                     help='number of environments simulated in parallel')
 parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
-parser.add_argument('--steps_per_batch', type=int, default=8,
+parser.add_argument('--steps_per_batch', type=int, default=16,
                     help='number of agent steps when collecting trajectories for a single batch')
 parser.add_argument('--discount', type=float, default=0.95,
                     help='discount for future rewards')
