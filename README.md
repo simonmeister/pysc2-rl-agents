@@ -1,6 +1,6 @@
 # PySC2 Deep RL Agents
 
-This repository attempts to implement the Advantage Actor-Critic agent baseline for the 
+This repository attempts to implement the Advantage Actor-Critic (A2C) agent baseline for the 
 [pysc2](https://github.com/deepmind/pysc2/) 
 environment as described in the 
 [DeepMind StarCraft II paper](https://deepmind.com/documents/110/sc2le.pdf).
