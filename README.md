@@ -1,3 +1,5 @@
+![](https://giphy.com/gifs/starcraft-ii-movetobeacon-3o751Y4FBK6nduAfAI)
+
 # PySC2 Deep RL Agents
 
 This repository implements a Advantage Actor-Critic agent baseline for the
