@@ -21,7 +21,8 @@ class A2CAgent():
                value_loss_weight=0.5,
                entropy_weight=1e-3,
                learning_rate=1e-4,
-               max_gradient_norm=500.0):
+               max_gradient_norm=500.0,
+               max_to_keep=5):
     self.sess = sess
     self.network_cls = network_cls
     self.value_loss_weight = value_loss_weight
@@ -29,12 +30,13 @@ class A2CAgent():
     self.learning_rate = learning_rate
     self.max_gradient_norm = max_gradient_norm
     self.train_step = 0
+    self.max_to_keep = max_to_keep
 
   def build(self, static_shape_channels, resolution, scope=None, reuse=None):
     #with tf.variable_scope(scope, reuse=reuse):
     self._build(static_shape_channels, resolution)
     variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
-    self.saver = tf.train.Saver(variables)
+    self.saver = tf.train.Saver(variables, max_to_keep=self.max_to_keep)
     self.init_op = tf.variables_initializer(variables)
     train_summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope=scope)
     self.train_summary_op = tf.summary.merge(train_summaries)

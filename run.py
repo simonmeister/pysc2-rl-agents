@@ -22,7 +22,7 @@ FLAGS(['run.py'])
 parser = argparse.ArgumentParser(description='Starcraft 2 deep RL agents')
 parser.add_argument('experiment_id', type=str,
                     help='identifier to store experiment results')
-parser.add_argument('--train', action='store_false',
+parser.add_argument('--eval', action='store_true',
                     help='if false, episode scores are evaluated')
 parser.add_argument('--ow', action='store_true',
                     help='overwrite existing experiments (if --train=True)')
@@ -40,7 +40,7 @@ parser.add_argument('--step_mul', type=int, default=8,
                     help='number of game steps per agent step')
 parser.add_argument('--steps_per_batch', type=int, default=8,
                     help='number of agent steps when collecting trajectories for a single batch')
-parser.add_argument('--discount', type=float, default=0.99,
+parser.add_argument('--discount', type=float, default=0.95,
                     help='discount for future rewards')
 parser.add_argument('--iters', type=int, default=-1,
                     help='number of iterations to run (-1 to run forever)')
@@ -52,6 +52,8 @@ parser.add_argument('--summary_iters', type=int, default=1,
                     help='record summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
                     help='store checkpoint after this many iterations')
+parser.add_argument('--max_to_keep', type=int, default=5,
+                    help='maximum number of checkpoints to keep before discarding older ones')
 parser.add_argument('--entropy_weight', type=float, default=1e-3,
                     help='weight of entropy penalty')
 parser.add_argument('--value_loss_weight', type=float, default=1.0,
@@ -65,7 +67,7 @@ parser.add_argument('--summary_dir', type=str, default='out/summary',
 
 args = parser.parse_args()
 # TODO write args to config file and store together with summaries (https://pypi.python.org/pypi/ConfigArgParse)
-
+args.train = not args.eval
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
@@ -111,7 +113,8 @@ def main():
         sess=sess,
         value_loss_weight=args.value_loss_weight,
         entropy_weight=args.entropy_weight,
-        learning_rate=args.lr)
+        learning_rate=args.lr,
+        max_to_keep=args.max_to_keep)
 
     runner = A2CRunner(
         envs=envs,
@@ -134,7 +137,7 @@ def main():
     i = 0
     try:
       while True:
-        write_summary = i % args.summary_iters == 0
+        write_summary = args.train and i % args.summary_iters == 0
 
         if i > 0 and i % args.save_iters == 0:
           _save_if_training(agent, summary_writer)
