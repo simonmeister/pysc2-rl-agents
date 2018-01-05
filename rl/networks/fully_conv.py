@@ -24,8 +24,6 @@ class FullyConv():
     for s in spec:
       f = feats[s.index]
       if s.type == features.FeatureType.CATEGORICAL:
-        #if s.type not in ['unit_type', 'player_relative']:
-        #  continue
         dims = np.round(np.log2(s.scale)).astype(np.int32).item()
         dims = max(dims, 1)
         indices = tf.one_hot(tf.to_int32(tf.squeeze(f, -1)), s.scale)
@@ -118,8 +116,7 @@ class FullyConv():
     broadcast_out = self.broadcast_along_channels(flat_emb, size2d)
 
     state_out = self.concat2d([screen_out, minimap_out, broadcast_out])
-    # NOTE: old movetb models were trained with this line - uncomment to eval them
-    #state_out = self.concat2d([screen_out, minimap_out])
+
     flat_out = layers.flatten(self.to_nhwc(state_out))
     fc = layers.fully_connected(flat_out, 256, activation_fn=tf.nn.relu)
 
@@ -127,15 +124,13 @@ class FullyConv():
     value = tf.reshape(value, [-1])
 
     fn_out = self.non_spatial_output(fc, NUM_FUNCTIONS)
-    #spatial_out = self.to_nhwc(self.spatial_output(state_out))
+
     args_out = dict()
     for arg_type in actions.TYPES:
       if is_spatial_action[arg_type]:
         arg_out = self.to_nhwc(self.spatial_output(state_out))
-        #arg_out = spatial_out
       else:
         arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
-        #arg_out = tf.ones([tf.shape(fn_out)[0], 1])
       args_out[arg_type] = arg_out
 
     policy = (fn_out, args_out)
