@@ -1,4 +1,4 @@
-![](https://giphy.com/gifs/starcraft-ii-movetobeacon-3o751Y4FBK6nduAfAI)
+![](https://media.giphy.com/media/l1IBilqNEvJnFnMmQ/giphy.gif)
 
 # PySC2 Deep RL Agents
 
