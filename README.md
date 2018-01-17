@@ -17,13 +17,12 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 ### Progress
 - [x] A2C agent
 - [x] FullyConv architecture
-- [x] support all spatial screen and minimap observations
+- [x] support all spatial screen and minimap observations as well as non-spatial player observations
 - [x] support the full action space as described in the DeepMind paper
 (predicting all arguments independently)
 - [x] support training on all mini games
 - [x] train MoveToBeacon
 - [ ] train other mini games and correct any training issues
-- [ ] support all non-spatial observations
 - [ ] LSTM architecture
 - [ ] Multi-GPU training
 
