@@ -1,3 +1,5 @@
+![](https://media.giphy.com/media/l1IBilqNEvJnFnMmQ/giphy.gif)
+
 # PySC2 Deep RL Agents
 
 This repository implements a Advantage Actor-Critic agent baseline for the
