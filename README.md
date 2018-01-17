@@ -8,7 +8,14 @@ environment as described in the
 [DeepMind StarCraft II paper](https://deepmind.com/documents/110/sc2le.pdf).
 We use a synchronous variant of A3C (A2C) to effectively train on GPUs.
 
-Note that this is still work in progress.
+This repository is part of a research project at the 
+[Autonomous Systems Labs](http://www.ias.informatik.tu-darmstadt.de/) 
+, [TU Darmstadt](https://www.tu-darmstadt.de/) by
+[Daniel Palenicek](https://github.com/danielpalen),
+[Marcel Hussing](https://github.com/marcelhussing), and
+[Simon Meister](https://github.com/simonmeister).
+
+**NOTE: this is still work in progress.**
 
 ### License
 
