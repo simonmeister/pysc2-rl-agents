@@ -36,7 +36,7 @@ class FullyConv():
     return tf.concat(out_list, -1)
 
   def log_transform(self, x, scale):
-    return tf.log(8 * x / scale + 1)
+    return tf.log(x + 1.)
 
   def embed_spatial(self, x, dims):
     x = self.from_nhwc(x)

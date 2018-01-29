@@ -6,20 +6,17 @@ This repository implements a Advantage Actor-Critic agent baseline for the
 [pysc2](https://github.com/deepmind/pysc2/)
 environment as described in the
 [DeepMind StarCraft II paper](https://deepmind.com/documents/110/sc2le.pdf).
-We use a synchronous variant of A3C (A2C) to effectively train on GPUs.
+We use a synchronous variant of A3C (A2C) to effectively train on GPUs and
+otherwise try to stay as close as possible to the agent in the paper.
 
-This repository is part of a research project at the 
-[Autonomous Systems Labs](http://www.ias.informatik.tu-darmstadt.de/) 
+This repository is part of a research project at the
+[Autonomous Systems Labs](http://www.ias.informatik.tu-darmstadt.de/)
 , [TU Darmstadt](https://www.tu-darmstadt.de/) by
 [Daniel Palenicek](https://github.com/danielpalen),
 [Marcel Hussing](https://github.com/marcelhussing), and
 [Simon Meister](https://github.com/simonmeister).
 
 **NOTE: this is still work in progress.**
-
-### License
-
-This project is licensed under the MIT License (refer to the LICENSE file for details).
 
 ### Progress
 - [x] A2C agent
@@ -28,27 +25,37 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 - [x] support the full action space as described in the DeepMind paper
 (predicting all arguments independently)
 - [x] support training on all mini games
-- [x] train MoveToBeacon
-- [ ] train other mini games and correct any training issues
+- [ ] report results for all mini games and correct any training issues
 - [ ] LSTM architecture
 - [ ] Multi-GPU training
 
-Any mini game can in principle be trained with the current code,
-although we still have to do experiments on maps other than `MoveToBeacon`.
+### License
+
+This project is licensed under the MIT License (refer to the LICENSE file for details).
 
 ## Results
 
-| Map | mean score (ours) | best mean score (DeepMind) |
+When training with default settings, we get the following results:
+
+| Map | mean score (ours) |  best mean score (DeepMind) |
 | --- | --- | --- |
 | MoveToBeacon | 26 | 26 |
+| CollectMineralShards | TODO | 103 |
+| FindAndDefeatZerglings | TODO | 45 |
 
 Note that the DeepMind mean scores are their best scores from 100 experiments for each
 game, where the initial learning rate was randomly sampled for each run.
 We use a constant initial learning rate for a much smaller number of runs due to limited hardware.
+All agents use the same FullyConv agent.
 
-With default settings (32 environments), learning MoveToBeacon currently
-takes between 3K and 8K episodes in total.
+With default settings (32 environments), learning MoveToBeacon takes between 3K and 8K total episodes.
 This varies each run depending on random initialization and action sampling.
+
+| Map | average episodes |
+| --- | --- |
+| MoveToBeacon | 3K - 8K |
+| CollectMineralShards | TODO |
+| FindAndDefeatZerglings | TODO |
 
 ## Usage
 

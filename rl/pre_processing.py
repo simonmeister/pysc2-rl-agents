@@ -12,7 +12,7 @@ NUM_FUNCTIONS = len(actions.FUNCTIONS)
 NUM_PLAYERS = features.SCREEN_FEATURES.player_id.scale
 
 FLAT_FEATURES = [
-  FlatFeature(0,  features.FeatureType.CATEGORICAL, NUM_PLAYERS, 'player_id'),
+  FlatFeature(0,  features.FeatureType.SCALAR, 1, 'player_id'),
   FlatFeature(1,  features.FeatureType.SCALAR, 1, 'minerals'),
   FlatFeature(2,  features.FeatureType.SCALAR, 1, 'vespene'),
   FlatFeature(3,  features.FeatureType.SCALAR, 1, 'food_used'),
