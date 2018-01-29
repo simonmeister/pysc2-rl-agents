@@ -1,3 +1,5 @@
+![](https://media.giphy.com/media/l1IBilqNEvJnFnMmQ/giphy.gif)
+
 # PySC2 Deep RL Agents
 
 This repository implements a Advantage Actor-Critic agent baseline for the
@@ -6,7 +8,14 @@ environment as described in the
 [DeepMind StarCraft II paper](https://deepmind.com/documents/110/sc2le.pdf).
 We use a synchronous variant of A3C (A2C) to effectively train on GPUs.
 
-Note that this is still work in progress.
+This repository is part of a research project at the 
+[Autonomous Systems Labs](http://www.ias.informatik.tu-darmstadt.de/) 
+, [TU Darmstadt](https://www.tu-darmstadt.de/) by
+[Daniel Palenicek](https://github.com/danielpalen),
+[Marcel Hussing](https://github.com/marcelhussing), and
+[Simon Meister](https://github.com/simonmeister).
+
+**NOTE: this is still work in progress.**
 
 ### License
 
@@ -15,13 +24,12 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 ### Progress
 - [x] A2C agent
 - [x] FullyConv architecture
-- [x] support all spatial screen and minimap observations
+- [x] support all spatial screen and minimap observations as well as non-spatial player observations
 - [x] support the full action space as described in the DeepMind paper
 (predicting all arguments independently)
 - [x] support training on all mini games
 - [x] train MoveToBeacon
 - [ ] train other mini games and correct any training issues
-- [ ] support all non-spatial observations
 - [ ] LSTM architecture
 - [ ] Multi-GPU training
 
