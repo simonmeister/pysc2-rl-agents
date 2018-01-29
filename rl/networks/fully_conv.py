@@ -15,7 +15,7 @@ class FullyConv():
   computations. Inputs and outputs are always in NHWC.
   """
 
-  def __init__(self, data_format='NHWC'):
+  def __init__(self, data_format='NCHW'):
     self.data_format = data_format
 
   def embed_obs(self, x, spec, embed_fn):
@@ -39,13 +39,15 @@ class FullyConv():
     return tf.log(8 * x / scale + 1)
 
   def embed_spatial(self, x, dims):
-    return layers.conv2d(
+    x = self.from_nhwc(x)
+    out = layers.conv2d(
         x, dims,
         kernel_size=1,
         stride=1,
         padding='SAME',
         activation_fn=tf.nn.relu,
         data_format=self.data_format)
+    return self.to_nhwc(out)
 
   def embed_flat(self, x, dims):
     return layers.fully_connected(
@@ -76,8 +78,9 @@ class FullyConv():
     return tf.nn.softmax(logits)
 
   def spatial_output(self, x):
-    logits = layers.conv2d(x, 1, kernel_size=1, stride=1, activation_fn=None)
-    logits = layers.flatten(logits)
+    logits = layers.conv2d(x, 1, kernel_size=1, stride=1, activation_fn=None,
+                           data_format=self.data_format)
+    logits = layers.flatten(self.to_nhwc(logits))
     return tf.nn.softmax(logits)
 
   def concat2d(self, lst):
@@ -128,7 +131,7 @@ class FullyConv():
     args_out = dict()
     for arg_type in actions.TYPES:
       if is_spatial_action[arg_type]:
-        arg_out = self.to_nhwc(self.spatial_output(state_out))
+        arg_out = self.spatial_output(state_out)
       else:
         arg_out = self.non_spatial_output(fc, arg_type.sizes[0])
       args_out[arg_type] = arg_out

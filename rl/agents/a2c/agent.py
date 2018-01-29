@@ -20,8 +20,8 @@ class A2CAgent():
                network_cls=FullyConv,
                value_loss_weight=0.5,
                entropy_weight=1e-3,
-               learning_rate=1e-4,
-               max_gradient_norm=500.0,
+               learning_rate=7e-4,
+               max_gradient_norm=1.0,
                max_to_keep=5):
     self.sess = sess
     self.network_cls = network_cls
@@ -83,7 +83,7 @@ class A2CAgent():
     log_probs = compute_policy_log_probs(available_actions, policy, actions)
 
     policy_loss = -tf.reduce_mean(advs * log_probs)
-    value_loss = tf.reduce_mean(tf.square(returns - value))
+    value_loss = tf.reduce_mean(tf.square(returns - value) / 2.)
     entropy = compute_policy_entropy(available_actions, policy, actions)
 
     loss = (policy_loss
@@ -99,9 +99,9 @@ class A2CAgent():
     tf.summary.scalar('rl/advs', tf.reduce_mean(advs))
     self.loss = loss
 
-    # TODO support learning rate schedule
-    opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=5e-7)
-    #opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate, decay=0.99)
+    opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate,
+                                    decay=0.99,
+                                    epsilon=1e-5)
 
     self.train_op = layers.optimize_loss(
         loss=loss,

@@ -30,9 +30,13 @@ although we still have to do experiments on maps other than `MoveToBeacon`.
 
 ## Results
 
-| Map | mean score (ours) | mean score (DeepMind) |
+| Map | mean score (ours) | best mean score (DeepMind) |
 | --- | --- | --- |
-| MoveToBeacon | 25 | 26 |
+| MoveToBeacon | 26 | 26 |
+
+Note that the DeepMind mean scores are their best scores from 100 experiments for each
+game, where the initial learning rate was randomly sampled for each run.
+We use a constant initial learning rate for a much smaller number of runs due to limited hardware.
 
 With default settings (32 environments), learning MoveToBeacon currently
 takes between 3K and 8K episodes in total.
@@ -41,7 +45,8 @@ This varies each run depending on random initialization and action sampling.
 ## Usage
 
 ### Hardware requirements
-- for fast training, a GPU is recommended
+- for fast training, a GPU is recommended.
+We ran each experiment on a single Titan X Pascal (12GB).
 
 ### Software requirements
 - Python 3
