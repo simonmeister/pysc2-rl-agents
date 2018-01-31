@@ -99,7 +99,12 @@ class A2CAgent():
     tf.summary.scalar('rl/advs', tf.reduce_mean(advs))
     self.loss = loss
 
-    opt = tf.train.RMSPropOptimizer(learning_rate=self.learning_rate,
+    global_step = tf.Variable(0, trainable=False)
+    learning_rate = tf.train.exponential_decay(
+        self.learning_rate, global_step,
+        10000, 0.94)
+
+    opt = tf.train.RMSPropOptimizer(learning_rate=learning_rate,
                                     decay=0.99,
                                     epsilon=1e-5)
 

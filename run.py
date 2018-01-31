@@ -147,7 +147,7 @@ def main():
         if write_summary:
           agent_step, loss, summary = result
           summary_writer.add_summary(summary, global_step=agent_step)
-          print('iter %d: loss = %f' % (i, loss))
+          print('iter %d: loss = %f' % (agent_step, loss))
 
         i += 1
 

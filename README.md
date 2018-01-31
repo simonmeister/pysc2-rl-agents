@@ -7,7 +7,7 @@ This repository implements a Advantage Actor-Critic agent baseline for the
 environment as described in the
 [DeepMind StarCraft II paper](https://deepmind.com/documents/110/sc2le.pdf).
 We use a synchronous variant of A3C (A2C) to effectively train on GPUs and
-otherwise try to stay as close as possible to the agent in the paper.
+otherwise stay as close as possible to the agent described in the paper.
 
 This repository is part of a research project at the
 [Autonomous Systems Labs](http://www.ias.informatik.tu-darmstadt.de/)
@@ -25,7 +25,7 @@ This repository is part of a research project at the
 - [x] support the full action space as described in the DeepMind paper
 (predicting all arguments independently)
 - [x] support training on all mini games
-- [ ] report results for all mini games and correct any training issues
+- [ ] report results for all mini games
 - [ ] LSTM architecture
 - [ ] Multi-GPU training
 
@@ -35,27 +35,25 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 
 ## Results
 
-When training with default settings, we get the following results:
+On the mini games, we get the following results:
 
-| Map | mean score (ours) |  best mean score (DeepMind) |
-| --- | --- | --- |
-| MoveToBeacon | 26 | 26 |
-| CollectMineralShards | TODO | 103 |
-| FindAndDefeatZerglings | TODO | 45 |
+| Map | best mean score (ours) |  best mean score (DeepMind) | episodes (ours) |
+| --- | --- | --- | --- |
+| MoveToBeacon | **26** | 26 | 8K |
+| CollectMineralShards | **97** | 103 | 300K |
+| FindAndDefeatZerglings | - | 45 | - |
+| DefeatRoaches | - | 100 | - |
+| DefeatZerglingsAndBanelings | - | 62 | - |
+| CollectMineralsAndGas | - | 3978 | - |
+| BuildMarines | - | 3 | - |
 
-Note that the DeepMind mean scores are their best scores from 100 experiments for each
+Note that the DeepMind mean scores are their best individual scores after 100 runs for each
 game, where the initial learning rate was randomly sampled for each run.
 We use a constant initial learning rate for a much smaller number of runs due to limited hardware.
 All agents use the same FullyConv agent.
 
-With default settings (32 environments), learning MoveToBeacon takes between 3K and 8K total episodes.
+With default settings (32 environments), learning MoveToBeacon well takes between 3K and 8K total episodes.
 This varies each run depending on random initialization and action sampling.
-
-| Map | average episodes |
-| --- | --- |
-| MoveToBeacon | 3K - 8K |
-| CollectMineralShards | TODO |
-| FindAndDefeatZerglings | TODO |
 
 ## Usage
 
@@ -79,10 +77,10 @@ We ran each experiment on a single Titan X Pascal (12GB).
 and extract them to your `StarcraftII/Maps/` directory.
 
 ### Train & run
-- train with `python run.py my_experiment --map MoveToBeacon`.
-- run trained agents with `python run.py my_experiment --map MoveToBeacon --eval`.
+- run and train: `python run.py my_experiment --map MoveToBeacon`.
+- run and evalutate without training: `python run.py my_experiment --map MoveToBeacon --eval`.
 
-You can visualize the agents with the `--vis` flag.
+You can visualize the agents during training or evaluation with the `--vis` flag.
 See `run.py` for all arguments.
 
 Summaries are written to `out/summary/<experiment_name>`
@@ -96,7 +94,3 @@ with adaptions from
 [sc2aibot](https://github.com/pekaalto/sc2aibot).
 Some of the code in `rl/agents/a2c/runner.py` is loosely based on
 [sc2aibot](https://github.com/pekaalto/sc2aibot).
-
-Also see
-[pysc2-agents](https://github.com/xhujoy/pysc2-agents)
-for a similar repository.
