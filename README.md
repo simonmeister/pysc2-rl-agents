@@ -47,6 +47,14 @@ On the mini games, we get the following results:
 | CollectMineralsAndGas | - | 3978 | - |
 | BuildMarines | - | 3 | - |
 
+In the following we show plots for the score over iterations.
+
+##### MoveToBeacon
+<img src="https://user-images.githubusercontent.com/22519290/35693701-3b4b469a-077f-11e8-942d-c645644fa671.png" width="360">
+
+##### CollectMineralShards
+<img src="https://user-images.githubusercontent.com/22519290/35692346-66e966fa-077b-11e8-8ad3-03afc684b8bf.png" width="360">
+
 Note that the DeepMind mean scores are their best individual scores after 100 runs for each
 game, where the initial learning rate was randomly sampled for each run.
 We use a constant initial learning rate for a much smaller number of runs due to limited hardware.
