@@ -65,18 +65,18 @@ This varies each run depending on random initialization and action sampling.
 
 ## Usage
 
-### Hardware requirements
+### Hardware Requirements
 - for fast training, a GPU is recommended.
 We ran each experiment on a single Titan X Pascal (12GB).
 
-### Software requirements
+### Software Requirements
 - Python 3
 - pysc2 (tested with v1.2)
 - TensorFlow (tested with 1.4.0)
 - StarCraft II and mini games (see below or
   [pysc2](https://github.com/deepmind/pysc2/))
 
-### Quick install guide
+### Quick Install Guide
 - `pip install numpy tensorflow-gpu pysc2==1.2`
 - Install StarCraft II. On Linux, use
 [3.16.1](http://blzdistsc2-a.akamaihd.net/Linux/SC2.3.16.1.zip).
