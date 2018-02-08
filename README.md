@@ -41,11 +41,22 @@ On the mini games, we get the following results:
 | --- | --- | --- | --- |
 | MoveToBeacon | **26** | 26 | 8K |
 | CollectMineralShards | **97** | 103 | 300K |
-| FindAndDefeatZerglings | - | 45 | - |
+| FindAndDefeatZerglings | **45** | 45 | - |
 | DefeatRoaches | - | 100 | - |
 | DefeatZerglingsAndBanelings | - | 62 | - |
 | CollectMineralsAndGas | - | 3978 | - |
 | BuildMarines | - | 3 | - |
+
+In the following we show plots for the score over iterations.
+
+##### MoveToBeacon
+<img src="https://user-images.githubusercontent.com/22519290/35693701-3b4b469a-077f-11e8-942d-c645644fa671.png" width="360">
+
+##### CollectMineralShards
+<img src="https://user-images.githubusercontent.com/22519290/35692346-66e966fa-077b-11e8-8ad3-03afc684b8bf.png" width="360">
+
+##### FindAndDefeatZerglings
+<img src="https://user-images.githubusercontent.com/22519290/35964384-e7ebe570-0cb7-11e8-90af-9ad495d42469.png" width="360">
 
 Note that the DeepMind mean scores are their best individual scores after 100 runs for each
 game, where the initial learning rate was randomly sampled for each run.
@@ -57,18 +68,18 @@ This varies each run depending on random initialization and action sampling.
 
 ## Usage
 
-### Hardware requirements
+### Hardware Requirements
 - for fast training, a GPU is recommended.
 We ran each experiment on a single Titan X Pascal (12GB).
 
-### Software requirements
+### Software Requirements
 - Python 3
 - pysc2 (tested with v1.2)
 - TensorFlow (tested with 1.4.0)
 - StarCraft II and mini games (see below or
   [pysc2](https://github.com/deepmind/pysc2/))
 
-### Quick install guide
+### Quick Install Guide
 - `pip install numpy tensorflow-gpu pysc2==1.2`
 - Install StarCraft II. On Linux, use
 [3.16.1](http://blzdistsc2-a.akamaihd.net/Linux/SC2.3.16.1.zip).
