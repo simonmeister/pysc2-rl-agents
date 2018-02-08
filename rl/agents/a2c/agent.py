@@ -18,6 +18,7 @@ class A2CAgent():
   def __init__(self,
                sess,
                network_cls=FullyConv,
+               network_data_format='NCHW',
                value_loss_weight=0.5,
                entropy_weight=1e-3,
                learning_rate=7e-4,
@@ -25,6 +26,7 @@ class A2CAgent():
                max_to_keep=5):
     self.sess = sess
     self.network_cls = network_cls
+    self.network_data_format = network_data_format
     self.value_loss_weight = value_loss_weight
     self.entropy_weight = entropy_weight
     self.learning_rate = learning_rate
@@ -68,7 +70,7 @@ class A2CAgent():
     self.returns = returns
     self.available_actions = available_actions
 
-    policy, value = self.network_cls().build(
+    policy, value = self.network_cls(data_format=self.network_data_format).build(
         screen, minimap, flat)
     self.policy = policy
     self.value = value

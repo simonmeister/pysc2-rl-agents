@@ -48,6 +48,8 @@ parser.add_argument('--seed', type=int, default=123,
                     help='random seed')
 parser.add_argument('--gpu', type=str, default='0',
                     help='gpu device id')
+parser.add_argument('--nhwc', action='store_true',
+                    help='train fullyConv in NCHW mode')
 parser.add_argument('--summary_iters', type=int, default=10,
                     help='record training summary after this many iterations')
 parser.add_argument('--save_iters', type=int, default=5000,
@@ -109,8 +111,11 @@ def main():
     sess = tf.Session()
     summary_writer = tf.summary.FileWriter(summary_path)
 
+    network_data_format = 'NHWC' if args.nhwc else 'NCHW'
+
     agent = A2CAgent(
         sess=sess,
+        network_data_format=network_data_format,
         value_loss_weight=args.value_loss_weight,
         entropy_weight=args.entropy_weight,
         learning_rate=args.lr,
