@@ -55,6 +55,9 @@ In the following we show plots for the score over iterations.
 ##### CollectMineralShards
 <img src="https://user-images.githubusercontent.com/22519290/35692346-66e966fa-077b-11e8-8ad3-03afc684b8bf.png" width="360">
 
+##### FindAndDefeatZerglings
+<img src="https://user-images.githubusercontent.com/22519290/35964384-e7ebe570-0cb7-11e8-90af-9ad495d42469.png" width="360">
+
 Note that the DeepMind mean scores are their best individual scores after 100 runs for each
 game, where the initial learning rate was randomly sampled for each run.
 We use a constant initial learning rate for a much smaller number of runs due to limited hardware.
