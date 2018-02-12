@@ -43,11 +43,11 @@ On the mini games, we get the following results:
 | CollectMineralShards | **97** | 103 | 300K |
 | FindAndDefeatZerglings | **45** | 45 | 450K |
 | DefeatRoaches | - | 100 | - |
-| DefeatZerglingsAndBanelings | - | 62 | - |
+| DefeatZerglingsAndBanelings | **68** | 62 | - |
 | CollectMineralsAndGas | - | 3978 | - |
 | BuildMarines | - | 3 | - |
 
-In the following we show plots for the score over iterations.
+In the following we show plots for the score over episodes.
 
 ##### MoveToBeacon
 <img src="https://user-images.githubusercontent.com/22519290/35693701-3b4b469a-077f-11e8-942d-c645644fa671.png" width="360">
