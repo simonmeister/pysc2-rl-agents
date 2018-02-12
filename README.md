@@ -37,7 +37,7 @@ This project is licensed under the MIT License (refer to the LICENSE file for de
 
 On the mini games, we get the following results:
 
-| Map | best mean score (ours) |  best mean score (DeepMind) | training steps (ours) |
+| Map | best mean score (ours) |  best mean score (DeepMind) | episodes (ours) |
 | --- | --- | --- | --- |
 | MoveToBeacon | **26** | 26 | 8K |
 | CollectMineralShards | **97** | 103 | 300K |
