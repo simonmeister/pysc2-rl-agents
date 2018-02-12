@@ -18,7 +18,6 @@
          width="240" height="180" border="10" />
   </a>
 </div>
-<p><a href="https://youtu.be/GFRsXx0imHc">Higher resolution videos of the bots on YouTube.</a></p>
 
 # PySC2 Deep RL Agents
 
