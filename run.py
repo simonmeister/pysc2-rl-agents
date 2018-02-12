@@ -62,7 +62,7 @@ parser.add_argument('--value_loss_weight', type=float, default=0.5,
                     help='weight of value function loss')
 parser.add_argument('--lr', type=float, default=7e-4,
                     help='initial learning rate')
-parser.add_argument('--save_dir', type=str, default='out/models',
+parser.add_argument('--save_dir', type=str, default=os.path.join('out','models'),
                     help='root directory for checkpoint storage')
 parser.add_argument('--summary_dir', type=str, default=os.path.join('out','summary'),
                     help='root directory for summary storage')
