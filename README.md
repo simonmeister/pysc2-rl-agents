@@ -40,8 +40,6 @@ This repository is part of a research project at the
 [Marcel Hussing](https://github.com/marcelhussing), and
 [Simon Meister](https://github.com/simonmeister).
 
-**NOTE: this is still work in progress.**
-
 ### Progress
 - [x] A2C agent
 - [x] FullyConv architecture
