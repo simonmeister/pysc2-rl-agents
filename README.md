@@ -1,24 +1,26 @@
 <div align="center">
-  <a href="https://youtu.be/m2pC9md0ixY"
-     target="_blank"
-     style="color:white">
+  <a href="https://youtu.be/m2pC9md0ixY" target="_blank">
     <img src="https://user-images.githubusercontent.com/22519290/36123695-c69e17dc-104d-11e8-80bd-33726f3f0f12.gif"
          alt="MoveToBeacon"
-         width="240" height="180" border="10" />
+         width="320" border="10" style="color:white" />
   </a>
-  <a href="https://youtu.be/lpOlKfyhIXc"
-     target="_blank"
-     style="color:white">
+  <a href="https://youtu.be/lpOlKfyhIXc" target="_blank">
     <img src="https://user-images.githubusercontent.com/22519290/36123698-c910b650-104d-11e8-8019-8825187b677f.gif"
          alt="CollectMineralShards"
-         width="240" height="180" border="10" />
+         width="320" border="10" style="color:white" />
   </a>
-  <a href="https://youtu.be/GFRsXx0imHc"
-     target="_blank"
-     style="color:white">
+</div>
+
+<div align="center">
+  <a href="https://youtu.be/GFRsXx0imHc" target="_blank">
     <img src="https://user-images.githubusercontent.com/22519290/36123701-cabcb13e-104d-11e8-9aa8-7f1332d3cdb7.gif"
          alt="FindAndDefeatZerglings"
-         width="240" height="180" border="10" />
+         width="320" border="10" style="color:white" />
+  </a>
+  <a href="https://youtu.be/-wDhAHkj90A" target="_blank">
+    <img src="https://user-images.githubusercontent.com/22519290/36202298-87b14c60-1183-11e8-9b3f-f9bb5c8b1ab7.gif"
+         alt="DefeatZerglingsAndBanelings"
+         width="320" border="10" style="color:white" />
   </a>
 </div>
 
