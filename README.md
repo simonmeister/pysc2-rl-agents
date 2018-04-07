@@ -28,8 +28,8 @@
 
 This repository implements a Advantage Actor-Critic agent baseline for the
 [pysc2](https://github.com/deepmind/pysc2/)
-environment as described in the
-[DeepMind StarCraft II paper](https://deepmind.com/documents/110/sc2le.pdf).
+environment as described in the DeepMind paper
+[StarCraft II: A New Challenge for Reinforcement Learning](https://deepmind.com/documents/110/sc2le.pdf).
 We use a synchronous variant of A3C (A2C) to effectively train on GPUs and
 otherwise stay as close as possible to the agent described in the paper.
 
